@@ -112,14 +112,18 @@ exports.getModeration = async (req, res) => {
         const offset = (page - 1) * limit;
         
         let whereClause = '';
+        let countWhereClause = '';
         let queryParams = [limit, offset];
         
         if (filter === 'pending') {
             whereClause = "WHERE w.status = 'pending'";
+            countWhereClause = "WHERE status = 'pending'";
         } else if (filter === 'approved') {
             whereClause = "WHERE w.status = 'approved'";
+            countWhereClause = "WHERE status = 'approved'";
         } else if (filter === 'rejected') {
             whereClause = "WHERE w.status = 'rejected'";
+            countWhereClause = "WHERE status = 'rejected'";
         }
         
         const pendingWorks = await db.query(`
@@ -137,7 +141,7 @@ exports.getModeration = async (req, res) => {
         
         // Получаем общее количество для пагинации
         const countResult = await db.query(`
-            SELECT COUNT(*) FROM works ${whereClause}
+            SELECT COUNT(*) FROM works ${countWhereClause}
         `);
         const totalCount = parseInt(countResult.rows[0].count);
         const totalPages = Math.ceil(totalCount / limit);
