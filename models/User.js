@@ -48,6 +48,36 @@ class User {
         }
     }
 
+
+    static async updateProfile(userId, { username, bio, avatar_path }) {
+        const fields = [];
+        const values = [];
+
+        if (typeof username !== 'undefined') {
+            fields.push(`username = $${fields.length + 1}`);
+            values.push(username);
+        }
+
+        if (typeof bio !== 'undefined') {
+            fields.push(`bio = $${fields.length + 1}`);
+            values.push(bio);
+        }
+
+        if (avatar_path) {
+            fields.push(`avatar_path = $${fields.length + 1}`);
+            values.push(avatar_path);
+        }
+
+        if (fields.length === 0) {
+            return this.findById(userId);
+        }
+
+        values.push(userId);
+        const query = `UPDATE users SET ${fields.join(', ')} WHERE id = $${fields.length + 1} RETURNING *`;
+        const result = await db.query(query, values);
+        return result.rows[0];
+    }
+
     static async comparePassword(password, hash) {
         return bcrypt.compare(password, hash);
     }

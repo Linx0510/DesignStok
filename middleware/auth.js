@@ -4,7 +4,7 @@ module.exports = {
             return next();
         }
         req.flash('error', 'Пожалуйста, войдите в систему');
-        res.redirect('/login');
+        res.redirect('/auth/login');
     },
     
     isNotAuthenticated: (req, res, next) => {

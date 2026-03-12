@@ -5,7 +5,7 @@ const db = require('../config/database');
 
 exports.getProfile = async (req, res) => {
     try {
-        const userId = req.params.id || req.session.userId;
+        const userId = req.params.id ? parseInt(req.params.id, 10) : req.session.userId;
         const user = await User.findById(userId);
         
         if (!user) {
@@ -45,12 +45,11 @@ exports.getProfile = async (req, res) => {
         
         res.render('profile', {
             title: `Профиль ${user.username}`,
-            profileUser: user,
             works: works.rows,
             favorites: favorites.rows,
             notifications,
             isOwnProfile: userId === req.session.userId,
-            user: req.session.userId ? await User.findById(req.session.userId) : null
+            user
         });
     } catch (error) {
         console.error(error);

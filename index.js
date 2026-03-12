@@ -48,8 +48,9 @@ app.use('/', require('./routes/index'));
 app.use('/auth', require('./routes/auth'));
 app.use('/works', require('./routes/works'));
 app.use('/users', require('./routes/users'));
+app.use('/', require('./routes/users'));
 app.use('/admin', require('./routes/admin'));
-app.use('/', require('./routes/profile')); // Добавьте эту строку
+
 // 404 handler
 app.use((req, res) => {
     res.status(404).render('404', { title: 'Страница не найдена' });
