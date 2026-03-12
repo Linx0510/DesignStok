@@ -102,3 +102,19 @@ exports.markAllNotificationsRead = async (req, res) => {
         res.status(500).json({ success: false });
     }
 };
+
+exports.markNotificationRead = async (req, res) => {
+    try {
+        const notificationId = parseInt(req.params.id, 10);
+
+        if (Number.isNaN(notificationId)) {
+            return res.status(400).json({ success: false, message: 'Некорректный ID уведомления' });
+        }
+
+        await Notification.markAsRead(notificationId);
+        res.json({ success: true });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ success: false });
+    }
+};

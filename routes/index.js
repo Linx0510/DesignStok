@@ -8,14 +8,24 @@ router.get('/', async (req, res) => {
         const page = parseInt(req.query.page) || 1;
         const limit = 20;
         const offset = (page - 1) * limit;
-        
-        const works = await Work.findAll('approved', limit, offset);
-        let user = null;
-        
-        if (req.session.userId) {
-            user = await User.findById(req.session.userId);
+
+        let works = [];
+        try {
+            works = await Work.findAll('approved', limit, offset);
+        } catch (error) {
+            console.error('Ошибка загрузки работ на главной странице:', error.message);
         }
-        
+
+        let user = null;
+
+        if (req.session.userId) {
+            try {
+                user = await User.findById(req.session.userId);
+            } catch (error) {
+                console.error('Ошибка загрузки текущего пользователя:', error.message);
+            }
+        }
+
         res.render('index', {
             title: 'Главная',
             works,
