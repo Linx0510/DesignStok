@@ -82,7 +82,7 @@ exports.postRegister = async (req, res) => {
         
         if (errors.length > 0) {
             req.flash('error', errors.join(', '));
-            return res.redirect('/register');
+            return res.redirect('/auth/register');
         }
         
         const User = require('../models/User');
@@ -90,7 +90,7 @@ exports.postRegister = async (req, res) => {
         const existingUser = await User.findByEmail(email);
         if (existingUser) {
             req.flash('error', 'Пользователь с таким email уже существует');
-            return res.redirect('/register');
+            return res.redirect('/auth/register');
         }
         
         const user = await User.create(username, email, password);
@@ -104,7 +104,7 @@ exports.postRegister = async (req, res) => {
     } catch (error) {
         console.error('❌ Ошибка при регистрации:', error);
         req.flash('error', 'Произошла ошибка при регистрации: ' + error.message);
-        res.redirect('/register');
+        res.redirect('/auth/register');
     }
 };
 exports.logout = (req, res) => {
