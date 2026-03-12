@@ -5,7 +5,18 @@ const db = require('../config/database');
 
 exports.getProfile = async (req, res) => {
     try {
-        const userId = req.params.id ? parseInt(req.params.id, 10) : req.session.userId;
+        const isProfileByIdRoute = typeof req.params.id !== 'undefined';
+        const userId = isProfileByIdRoute ? parseInt(req.params.id, 10) : req.session.userId;
+
+        if (!isProfileByIdRoute && !req.session.userId) {
+            req.flash('error', 'Пожалуйста, войдите в систему');
+            return res.redirect('/auth/login');
+        }
+
+        if (isProfileByIdRoute && Number.isNaN(userId)) {
+            return res.status(404).render('404', { title: 'Пользователь не найден' });
+        }
+
         const user = await User.findById(userId);
 
         if (!user) {

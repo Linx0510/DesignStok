@@ -7,7 +7,7 @@
                 <% if (user.avatar_path) { %>
                     <img src="<%= user.avatar_path %>" alt="<%= user.username %>">
                 <% } else { %>
-                    <div class="avatar-large"><%= user.username[0].toUpperCase() %></div>
+                    <div class="avatar-large"><%= (user.username && user.username.charAt(0) ? user.username.charAt(0) : '?').toUpperCase() %></div>
                 <% } %>
             </div>
             <h1 class="profile-name"><%= user.username %></h1>
