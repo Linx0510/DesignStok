@@ -6,6 +6,11 @@ const db = require('../config/database');
 exports.getProfile = async (req, res) => {
     try {
         const userId = req.params.id ? parseInt(req.params.id, 10) : req.session.userId;
+
+        if (!userId || Number.isNaN(userId)) {
+            return res.status(404).render('404', { title: 'Пользователь не найден' });
+        }
+
         const user = await User.findById(userId);
 
         if (!user) {
