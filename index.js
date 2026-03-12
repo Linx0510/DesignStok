@@ -30,9 +30,13 @@ app.use(async (req, res, next) => {
     res.locals.success = req.flash('success');
     
     if (req.session.userId) {
-        const User = require('./models/User');
-        const user = await User.findById(req.session.userId);
-        res.locals.currentUser = user;
+        try {
+            const User = require('./models/User');
+            const user = await User.findById(req.session.userId);
+            res.locals.currentUser = user;
+        } catch (error) {
+            console.error('Ошибка загрузки пользователя в middleware:', error.message);
+        }
     }
     
     next();
