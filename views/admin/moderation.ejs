@@ -1,14 +1,395 @@
-CREATE TABLE settings (
-    id SERIAL PRIMARY KEY,
-    site_name VARCHAR(100) DEFAULT 'DesignStok',
-    site_description TEXT,
-    items_per_page INTEGER DEFAULT 20,
-    allow_registrations BOOLEAN DEFAULT TRUE,
-    maintenance_mode BOOLEAN DEFAULT FALSE,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
+<%- include('../partials/header') %>
 
--- Вставьте начальные настройки
-INSERT INTO settings (site_name, site_description) 
-VALUES ('DesignStok', 'Платформа для дизайнеров');
+<div class="admin-container">
+    <div class="admin-sidebar">
+        <div class="admin-nav">
+            <a href="/admin" class="admin-nav-link">Дашборд</a>
+            <a href="/admin/moderation" class="admin-nav-link active">Модерация</a>
+            <a href="/admin/complaints" class="admin-nav-link">Жалобы</a>
+            <a href="/admin/users" class="admin-nav-link">Пользователи</a>
+            <a href="/admin/settings" class="admin-nav-link">Настройки</a>
+        </div>
+    </div>
+
+    <div class="admin-content">
+        <div class="content-header">
+            <h1>Модерация работ</h1>
+            <div class="filter-tabs">
+                <a href="/admin/moderation?filter=pending" class="filter-tab <%= filter === 'pending' ? 'active' : '' %>">
+                    На проверке
+                </a>
+                <a href="/admin/moderation?filter=approved" class="filter-tab <%= filter === 'approved' ? 'active' : '' %>">
+                    Одобренные
+                </a>
+                <a href="/admin/moderation?filter=rejected" class="filter-tab <%= filter === 'rejected' ? 'active' : '' %>">
+                    Отклоненные
+                </a>
+            </div>
+        </div>
+
+        <% if (works && works.length > 0) { %>
+            <div class="works-list">
+                <% works.forEach(work => { %>
+                    <div class="work-card" data-id="<%= work.id %>">
+                        <img src="<%= work.image_path %>" alt="<%= work.title %>" class="work-image">
+
+                        <div class="work-body">
+                            <div class="work-title-row">
+                                <h3><%= work.title %></h3>
+                                <span class="status-badge status-<%= work.status %>">
+                                    <%= work.status === 'pending' ? 'На проверке' : (work.status === 'approved' ? 'Одобрена' : 'Отклонена') %>
+                                </span>
+                            </div>
+
+                            <p class="work-meta">
+                                Автор:
+                                <a href="/profile/<%= work.user_id %>"><%= work.username %></a>
+                                · <%= new Date(work.created_at).toLocaleString('ru-RU') %>
+                            </p>
+
+                            <% if (work.description) { %>
+                                <p class="work-description"><%= work.description %></p>
+                            <% } %>
+
+                            <% if (work.tags && work.tags.length) { %>
+                                <div class="tags">
+                                    <% work.tags.filter(Boolean).forEach(tag => { %>
+                                        <span class="tag"><%= tag %></span>
+                                    <% }) %>
+                                </div>
+                            <% } %>
+
+                            <div class="work-actions">
+                                <a href="/works/<%= work.id %>" class="btn btn-outline btn-sm" target="_blank">
+                                    <i class="fas fa-eye"></i> Просмотр
+                                </a>
+
+                                <% if (work.status === 'pending') { %>
+                                    <button class="btn btn-success btn-sm" onclick="approveWork(<%= work.id %>)">
+                                        <i class="fas fa-check"></i> Одобрить
+                                    </button>
+                                    <button class="btn btn-danger btn-sm" onclick="showRejectModal(<%= work.id %>, '<%= (work.title || '').replace(/'/g, "\\'") %>')">
+                                        <i class="fas fa-times"></i> Отклонить
+                                    </button>
+                                <% } %>
+                            </div>
+                        </div>
+                    </div>
+                <% }) %>
+            </div>
+
+            <% if (totalPages > 1) { %>
+                <div class="pagination">
+                    <% for(let i = 1; i <= totalPages; i++) { %>
+                        <a href="/admin/moderation?page=<%= i %>&filter=<%= filter %>"
+                           class="page <%= currentPage === i ? 'active' : '' %>">
+                            <%= i %>
+                        </a>
+                    <% } %>
+                </div>
+            <% } %>
+        <% } else { %>
+            <div class="empty-state">
+                <i class="fas fa-inbox"></i>
+                <h3>Работ не найдено</h3>
+                <p>По выбранному фильтру пока нет результатов.</p>
+            </div>
+        <% } %>
+    </div>
+</div>
+
+<div id="rejectModal" class="modal">
+    <div class="modal-content">
+        <span class="close" onclick="hideRejectModal()">&times;</span>
+        <h2>Отклонение работы</h2>
+        <p>Укажите причину отклонения для «<span id="rejectWorkTitle"></span>».</p>
+
+        <div class="form-group">
+            <label for="rejectReason">Причина:</label>
+            <textarea id="rejectReason" rows="4" placeholder="Например: нарушение авторских прав"></textarea>
+        </div>
+
+        <div class="modal-actions">
+            <button class="btn btn-danger" onclick="confirmReject()">
+                <i class="fas fa-times"></i> Отклонить
+            </button>
+            <button class="btn btn-outline" onclick="hideRejectModal()">Отмена</button>
+        </div>
+    </div>
+</div>
+
+<script>
+let currentWorkId = null;
+
+async function approveWork(workId) {
+    try {
+        const response = await fetch(`/admin/works/${workId}/approve`, {
+            method: 'POST',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        });
+
+        const data = await response.json();
+        if (data.success) {
+            showNotification('Работа одобрена', 'success');
+            setTimeout(() => location.reload(), 600);
+        } else {
+            showNotification(data.message || 'Не удалось одобрить работу', 'error');
+        }
+    } catch (error) {
+        console.error(error);
+        showNotification('Ошибка при одобрении работы', 'error');
+    }
+}
+
+function showRejectModal(workId, title) {
+    currentWorkId = workId;
+    document.getElementById('rejectWorkTitle').textContent = title;
+    document.getElementById('rejectModal').style.display = 'block';
+}
+
+function hideRejectModal() {
+    currentWorkId = null;
+    document.getElementById('rejectReason').value = '';
+    document.getElementById('rejectModal').style.display = 'none';
+}
+
+async function confirmReject() {
+    const reason = document.getElementById('rejectReason').value.trim();
+
+    if (!reason) {
+        alert('Укажите причину отклонения');
+        return;
+    }
+
+    try {
+        const response = await fetch(`/admin/works/${currentWorkId}/reject`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: JSON.stringify({ reason })
+        });
+
+        const data = await response.json();
+        if (data.success) {
+            hideRejectModal();
+            showNotification('Работа отклонена', 'success');
+            setTimeout(() => location.reload(), 600);
+        } else {
+            showNotification(data.message || 'Не удалось отклонить работу', 'error');
+        }
+    } catch (error) {
+        console.error(error);
+        showNotification('Ошибка при отклонении работы', 'error');
+    }
+}
+
+function showNotification(message, type) {
+    const notification = document.createElement('div');
+    notification.className = `notification ${type}`;
+    notification.innerHTML = `
+        <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'}"></i>
+        <span>${message}</span>
+    `;
+
+    document.body.appendChild(notification);
+
+    setTimeout(() => {
+        notification.classList.add('fade-out');
+        setTimeout(() => notification.remove(), 300);
+    }, 2500);
+}
+
+window.onclick = function(event) {
+    const modal = document.getElementById('rejectModal');
+    if (event.target === modal) {
+        hideRejectModal();
+    }
+}
+
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+        hideRejectModal();
+    }
+});
+</script>
+
+<style>
+.works-list {
+    display: grid;
+    gap: 16px;
+}
+
+.work-card {
+    background: var(--white);
+    border-radius: 10px;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
+    overflow: hidden;
+    display: grid;
+    grid-template-columns: 220px 1fr;
+}
+
+.work-image {
+    width: 100%;
+    height: 100%;
+    max-height: 220px;
+    object-fit: cover;
+}
+
+.work-body {
+    padding: 16px;
+}
+
+.work-title-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.work-title-row h3 {
+    margin: 0;
+}
+
+.work-meta {
+    margin: 0 0 10px;
+    color: var(--gray);
+    font-size: 14px;
+}
+
+.work-meta a {
+    color: var(--primary);
+    text-decoration: none;
+}
+
+.work-description {
+    margin-bottom: 10px;
+}
+
+.tags {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 12px;
+}
+
+.tag {
+    background: var(--light-gray);
+    color: var(--dark);
+    border-radius: 20px;
+    padding: 4px 10px;
+    font-size: 12px;
+}
+
+.status-badge {
+    border-radius: 20px;
+    padding: 4px 10px;
+    color: var(--white);
+    font-size: 12px;
+    white-space: nowrap;
+}
+
+.status-pending {
+    background: #f39c12;
+}
+
+.status-approved {
+    background: var(--success);
+}
+
+.status-rejected {
+    background: var(--error);
+}
+
+.work-actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+}
+
+.modal-content {
+    background: var(--white);
+    margin: 8vh auto;
+    padding: 24px;
+    border-radius: 10px;
+    width: min(560px, calc(100% - 24px));
+    position: relative;
+}
+
+.close {
+    position: absolute;
+    top: 8px;
+    right: 14px;
+    font-size: 26px;
+    color: var(--gray);
+    cursor: pointer;
+}
+
+#rejectReason {
+    width: 100%;
+    border: 2px solid var(--light-gray);
+    border-radius: 6px;
+    padding: 10px;
+    resize: vertical;
+    font-family: inherit;
+}
+
+.modal-actions {
+    margin-top: 16px;
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+}
+
+.notification {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: var(--white);
+    padding: 12px 16px;
+    border-radius: 8px;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    z-index: 2000;
+}
+
+.notification.success {
+    border-left: 4px solid var(--success);
+}
+
+.notification.error {
+    border-left: 4px solid var(--error);
+}
+
+.fade-out {
+    opacity: 0;
+    transform: translateX(100%);
+    transition: .3s ease;
+}
+
+@media (max-width: 768px) {
+    .work-card {
+        grid-template-columns: 1fr;
+    }
+
+    .work-image {
+        max-height: 240px;
+    }
+}
+</style>
+
+<%- include('../partials/footer') %>
