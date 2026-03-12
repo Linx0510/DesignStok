@@ -15,7 +15,7 @@ exports.postUpload = async (req, res) => {
     try {
         if (!req.file) {
             req.flash('error', 'Пожалуйста, выберите изображение');
-            return res.redirect('/upload');
+            return res.redirect('/works/upload');
         }
         
         const { title, description, tags } = req.body;
@@ -30,11 +30,11 @@ exports.postUpload = async (req, res) => {
         );
         
         req.flash('success', 'Работа успешно загружена и отправлена на модерацию');
-        res.redirect(`/work/${workId}`);
+        res.redirect(`/works/${workId}`);
     } catch (error) {
         console.error(error);
         req.flash('error', 'Ошибка при загрузке работы');
-        res.redirect('/upload');
+        res.redirect('/works/upload');
     }
 };
 
