@@ -48,10 +48,12 @@ app.set('views', path.join(__dirname, 'views'));
 
 // Routes
 const userRoutes = require('./routes/users');
+const profileRoutes = require('./routes/profile');
 
 app.use('/', require('./routes/index'));
 app.use('/auth', require('./routes/auth'));
 app.use('/works', require('./routes/works'));
+app.use('/', profileRoutes);
 app.use('/', userRoutes);
 app.use('/users', userRoutes);
 app.use('/admin', require('./routes/admin'));
