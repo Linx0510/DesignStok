@@ -1,0 +1,14 @@
+CREATE TABLE settings (
+    id SERIAL PRIMARY KEY,
+    site_name VARCHAR(100) DEFAULT 'DesignStok',
+    site_description TEXT,
+    items_per_page INTEGER DEFAULT 20,
+    allow_registrations BOOLEAN DEFAULT TRUE,
+    maintenance_mode BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Вставьте начальные настройки
+INSERT INTO settings (site_name, site_description) 
+VALUES ('DesignStok', 'Платформа для дизайнеров');

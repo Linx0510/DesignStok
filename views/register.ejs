@@ -1,0 +1,49 @@
+<%- include('partials/header') %>
+
+<div class="auth-container">
+    <div class="auth-card">
+        <h1>Регистрация</h1>
+        
+        <% if (error && error.length > 0) { %>
+            <div class="alert error">
+                <%= error %>
+            </div>
+        <% } %>
+        
+        <% if (success && success.length > 0) { %>
+            <div class="alert success">
+                <%= success %>
+            </div>
+        <% } %>
+        
+        <form action="/auth/register" method="POST" class="auth-form">
+            <div class="form-group">
+                <label for="username">Имя пользователя</label>
+                <input type="text" id="username" name="username" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="email">Email</label>
+                <input type="email" id="email" name="email" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="password">Пароль</label>
+                <input type="password" id="password" name="password" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="confirmPassword">Подтвердите пароль</label>
+                <input type="password" id="confirmPassword" name="confirmPassword" required>
+            </div>
+            
+            <button type="submit" class="btn btn-primary">Зарегистрироваться</button>
+        </form>
+        
+        <p class="auth-link">
+            Уже есть аккаунт? <a href="/auth/login">Войти</a>
+        </p>
+    </div>
+</div>
+
+<%- include('partials/footer') %>

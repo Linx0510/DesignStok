@@ -1,0 +1,458 @@
+<%- include('partials/header') %>
+
+<div class="upload-container">
+    <div class="upload-card">
+        <h1>Загрузить новую работу</h1>
+        
+        <form action="/works/upload" method="POST" enctype="multipart/form-data" class="upload-form" id="uploadForm">
+            <div class="form-group">
+                <label for="title">Название работы *</label>
+                <input type="text" id="title" name="title" required 
+                       placeholder="Введите название работы" maxlength="200">
+            </div>
+            
+            <div class="form-group">
+                <label for="description">Описание</label>
+                <textarea id="description" name="description" rows="5" 
+                          placeholder="Расскажите о своей работе..."></textarea>
+            </div>
+            
+            <div class="form-group">
+                <label for="tags">Теги (через запятую)</label>
+                <input type="text" id="tags" name="tags" 
+                       placeholder="дизайн, иллюстрация, графика">
+                <small>Например: логотип, брендинг, веб-дизайн</small>
+            </div>
+            
+            <div class="form-group">
+                <label for="image">Изображение *</label>
+                <div class="file-upload-area" id="dropArea">
+                    <input type="file" id="image" name="image" accept="image/*" required>
+                    <div class="file-upload-message">
+                        <i class="fas fa-cloud-upload-alt"></i>
+                        <p>Перетащите файл сюда или нажмите для выбора</p>
+                        <span class="file-info">Поддерживаются: JPG, PNG, GIF, WEBP (макс. 5MB)</span>
+                    </div>
+                    <div class="file-preview" id="filePreview" style="display: none;">
+                        <img id="previewImage" src="" alt="Preview">
+                        <button type="button" class="remove-file" onclick="removeFile()">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="form-group upload-rules">
+                <h3>Правила загрузки:</h3>
+                <ul>
+                    <li><i class="fas fa-check"></i> Работа должна быть вашей собственной</li>
+                    <li><i class="fas fa-check"></i> Запрещено публиковать чужие работы</li>
+                    <li><i class="fas fa-check"></i> Работа будет проверена модератором</li>
+                    <li><i class="fas fa-check"></i> Максимальный размер файла: 5MB</li>
+                </ul>
+            </div>
+            
+            <button type="submit" class="btn btn-primary btn-block" id="submitBtn">
+                <i class="fas fa-upload"></i> Загрузить работу
+            </button>
+        </form>
+    </div>
+</div>
+
+<!-- Индикатор загрузки -->
+<div id="uploadProgress" class="upload-progress" style="display: none;">
+    <div class="progress-content">
+        <div class="spinner"></div>
+        <p>Загрузка...</p>
+        <div class="progress-bar">
+            <div class="progress-fill" id="progressFill"></div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Предпросмотр изображения
+document.getElementById('image').addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (file) {
+        // Проверка размера
+        if (file.size > 5 * 1024 * 1024) {
+            alert('Файл слишком большой. Максимальный размер 5MB');
+            this.value = '';
+            return;
+        }
+        
+        // Проверка типа
+        if (!file.type.startsWith('image/')) {
+            alert('Пожалуйста, выберите изображение');
+            this.value = '';
+            return;
+        }
+        
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            document.getElementById('previewImage').src = e.target.result;
+            document.querySelector('.file-upload-message').style.display = 'none';
+            document.getElementById('filePreview').style.display = 'block';
+        }
+        reader.readAsDataURL(file);
+    }
+});
+
+// Drag and drop
+const dropArea = document.getElementById('dropArea');
+
+['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+    dropArea.addEventListener(eventName, preventDefaults, false);
+});
+
+function preventDefaults(e) {
+    e.preventDefault();
+    e.stopPropagation();
+}
+
+['dragenter', 'dragover'].forEach(eventName => {
+    dropArea.addEventListener(eventName, highlight, false);
+});
+
+['dragleave', 'drop'].forEach(eventName => {
+    dropArea.addEventListener(eventName, unhighlight, false);
+});
+
+function highlight() {
+    dropArea.classList.add('highlight');
+}
+
+function unhighlight() {
+    dropArea.classList.remove('highlight');
+}
+
+dropArea.addEventListener('drop', handleDrop, false);
+
+function handleDrop(e) {
+    const dt = e.dataTransfer;
+    const files = dt.files;
+    document.getElementById('image').files = files;
+    
+    // Триггерим событие change
+    const event = new Event('change', { bubbles: true });
+    document.getElementById('image').dispatchEvent(event);
+}
+
+function removeFile() {
+    document.getElementById('image').value = '';
+    document.getElementById('filePreview').style.display = 'none';
+    document.querySelector('.file-upload-message').style.display = 'block';
+}
+
+// Валидация формы
+document.getElementById('uploadForm').addEventListener('submit', function(e) {
+    const title = document.getElementById('title').value.trim();
+    const image = document.getElementById('image').files[0];
+    
+    if (!title) {
+        e.preventDefault();
+        alert('Введите название работы');
+        return;
+    }
+    
+    if (!image) {
+        e.preventDefault();
+        alert('Выберите изображение');
+        return;
+    }
+    
+    // Показываем прогресс загрузки
+    document.getElementById('uploadProgress').style.display = 'flex';
+    
+    // Имитация прогресса (в реальности нужно использовать XMLHttpRequest)
+    let progress = 0;
+    const interval = setInterval(() => {
+        progress += 10;
+        document.getElementById('progressFill').style.width = progress + '%';
+        if (progress >= 100) clearInterval(interval);
+    }, 100);
+});
+
+// Предзагрузка популярных тегов
+async function loadPopularTags() {
+    try {
+        const response = await fetch('/api/tags/popular');
+        const tags = await response.json();
+        
+        const tagsInput = document.getElementById('tags');
+        const suggestionBox = document.createElement('div');
+        suggestionBox.className = 'tags-suggestions';
+        
+        tags.slice(0, 10).forEach(tag => {
+            const tagBtn = document.createElement('button');
+            tagBtn.type = 'button';
+            tagBtn.className = 'tag-suggestion';
+            tagBtn.textContent = '#' + tag.name;
+            tagBtn.onclick = () => {
+                const currentTags = tagsInput.value.split(',').map(t => t.trim()).filter(t => t);
+                if (!currentTags.includes(tag.name)) {
+                    currentTags.push(tag.name);
+                    tagsInput.value = currentTags.join(', ');
+                }
+            };
+            suggestionBox.appendChild(tagBtn);
+        });
+        
+        tagsInput.parentNode.appendChild(suggestionBox);
+    } catch (error) {
+        console.error('Ошибка загрузки тегов:', error);
+    }
+}
+
+loadPopularTags();
+</script>
+
+<style>
+.upload-container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.upload-card {
+    background: var(--white);
+    border-radius: 10px;
+    padding: 40px;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+}
+
+.upload-card h1 {
+    text-align: center;
+    margin-bottom: 30px;
+    color: var(--dark);
+}
+
+.upload-form .form-group {
+    margin-bottom: 25px;
+}
+
+.upload-form label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 500;
+    color: var(--dark);
+}
+
+.upload-form input[type="text"],
+.upload-form textarea {
+    width: 100%;
+    padding: 12px;
+    border: 2px solid var(--light-gray);
+    border-radius: 5px;
+    font-family: inherit;
+    font-size: 15px;
+    transition: border-color 0.3s;
+}
+
+.upload-form input[type="text"]:focus,
+.upload-form textarea:focus {
+    outline: none;
+    border-color: var(--primary);
+}
+
+.upload-form textarea {
+    resize: vertical;
+}
+
+.upload-form small {
+    display: block;
+    margin-top: 5px;
+    color: var(--gray);
+    font-size: 12px;
+}
+
+.file-upload-area {
+    border: 3px dashed var(--light-gray);
+    border-radius: 10px;
+    padding: 40px;
+    text-align: center;
+    position: relative;
+    transition: all 0.3s;
+    cursor: pointer;
+}
+
+.file-upload-area.highlight {
+    border-color: var(--primary);
+    background: rgba(128, 0, 32, 0.05);
+}
+
+.file-upload-area input[type="file"] {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    cursor: pointer;
+}
+
+.file-upload-message i {
+    font-size: 48px;
+    color: var(--primary);
+    margin-bottom: 15px;
+}
+
+.file-upload-message p {
+    font-size: 16px;
+    color: var(--dark);
+    margin-bottom: 10px;
+}
+
+.file-info {
+    font-size: 12px;
+    color: var(--gray);
+}
+
+.file-preview {
+    position: relative;
+    max-width: 300px;
+    margin: 0 auto;
+}
+
+.file-preview img {
+    width: 100%;
+    max-height: 300px;
+    object-fit: contain;
+    border-radius: 5px;
+}
+
+.remove-file {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: rgba(220, 53, 69, 0.9);
+    color: var(--white);
+    border: none;
+    width: 35px;
+    height: 35px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.3s;
+}
+
+.remove-file:hover {
+    background: var(--error);
+}
+
+.upload-rules {
+    background: var(--light);
+    padding: 20px;
+    border-radius: 5px;
+}
+
+.upload-rules h3 {
+    margin-bottom: 10px;
+    font-size: 16px;
+}
+
+.upload-rules ul {
+    list-style: none;
+}
+
+.upload-rules li {
+    margin-bottom: 8px;
+    color: var(--gray);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.upload-rules li i {
+    color: var(--success);
+}
+
+.tags-suggestions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.tag-suggestion {
+    padding: 5px 12px;
+    background: var(--light);
+    border: 1px solid var(--light-gray);
+    border-radius: 15px;
+    font-size: 12px;
+    color: var(--primary);
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.tag-suggestion:hover {
+    background: var(--primary);
+    color: var(--white);
+    border-color: var(--primary);
+}
+
+.upload-progress {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0,0,0,0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.progress-content {
+    background: var(--white);
+    padding: 30px;
+    border-radius: 10px;
+    text-align: center;
+    min-width: 300px;
+}
+
+.spinner {
+    border: 4px solid var(--light);
+    border-top: 4px solid var(--primary);
+    border-radius: 50%;
+    width: 50px;
+    height: 50px;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 20px;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.progress-bar {
+    height: 10px;
+    background: var(--light);
+    border-radius: 5px;
+    margin-top: 15px;
+    overflow: hidden;
+}
+
+.progress-fill {
+    height: 100%;
+    background: var(--primary);
+    transition: width 0.3s;
+}
+
+@media (max-width: 768px) {
+    .upload-card {
+        padding: 20px;
+    }
+    
+    .file-upload-area {
+        padding: 20px;
+    }
+}
+</style>
+
+<%- include('partials/footer') %>

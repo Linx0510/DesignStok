@@ -1,0 +1,204 @@
+<%- include('partials/header') %>
+
+<div class="profile-container">
+    <div class="profile-header">
+        <div class="profile-cover">
+            <div class="profile-avatar">
+                <% if (user.avatar_path) { %>
+                    <img src="<%= user.avatar_path %>" alt="<%= user.username %>">
+                <% } else { %>
+                    <div class="avatar-large"><%= user.username[0].toUpperCase() %></div>
+                <% } %>
+            </div>
+            <h1 class="profile-name"><%= user.username %></h1>
+            <p class="profile-email"><%= user.email %></p>
+            <span class="profile-role"><%= user.role %></span>
+        </div>
+    </div>
+
+    <div class="profile-content">
+        <div class="profile-stats">
+            <div class="stat-item">
+                <span class="stat-value">0</span>
+                <span class="stat-label">Работ</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-value">0</span>
+                <span class="stat-label">Подписчиков</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-value">0</span>
+                <span class="stat-label">Подписок</span>
+            </div>
+        </div>
+
+        <div class="profile-bio">
+            <h3>О себе</h3>
+            <p><%= user.bio || 'Пользователь пока ничего не рассказал о себе' %></p>
+        </div>
+
+        <div class="profile-info">
+            <p><strong>Дата регистрации:</strong> <%= new Date(user.created_at).toLocaleDateString('ru-RU') %></p>
+            <% if (user.website) { %>
+                <p><strong>Сайт:</strong> <a href="<%= user.website %>" target="_blank"><%= user.website %></a></p>
+            <% } %>
+            <% if (user.location) { %>
+                <p><strong>Откуда:</strong> <%= user.location %></p>
+            <% } %>
+        </div>
+
+        <% if (currentUser && currentUser.id === user.id) { %>
+            <div class="profile-actions">
+                <a href="/profile/edit" class="btn">Редактировать профиль</a>
+                <a href="/works/new" class="btn">Добавить работу</a>
+                <a href="/auth/logout" class="btn btn-danger">Выйти</a>
+            </div>
+        <% } %>
+    </div>
+</div>
+
+<style>
+.profile-container {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.profile-header {
+    margin-bottom: 30px;
+}
+
+.profile-cover {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 10px;
+    padding: 40px;
+    color: white;
+    text-align: center;
+}
+
+.profile-avatar {
+    width: 120px;
+    height: 120px;
+    margin: 0 auto 20px;
+    border-radius: 50%;
+    overflow: hidden;
+    border: 4px solid white;
+}
+
+.profile-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.avatar-large {
+    width: 100%;
+    height: 100%;
+    background: #4a5568;
+    color: white;
+    font-size: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+}
+
+.profile-name {
+    font-size: 32px;
+    margin-bottom: 10px;
+}
+
+.profile-email {
+    font-size: 16px;
+    opacity: 0.9;
+    margin-bottom: 10px;
+}
+
+.profile-role {
+    display: inline-block;
+    padding: 5px 15px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 20px;
+    font-size: 14px;
+}
+
+.profile-stats {
+    display: flex;
+    justify-content: space-around;
+    margin-bottom: 30px;
+    padding: 20px;
+    background: #f7fafc;
+    border-radius: 10px;
+}
+
+.stat-item {
+    text-align: center;
+}
+
+.stat-value {
+    display: block;
+    font-size: 24px;
+    font-weight: bold;
+    color: #4a5568;
+}
+
+.stat-label {
+    font-size: 14px;
+    color: #718096;
+}
+
+.profile-bio {
+    margin-bottom: 30px;
+    padding: 20px;
+    background: #f7fafc;
+    border-radius: 10px;
+}
+
+.profile-bio h3 {
+    margin-bottom: 10px;
+    color: #4a5568;
+}
+
+.profile-info {
+    margin-bottom: 30px;
+    padding: 20px;
+    background: #f7fafc;
+    border-radius: 10px;
+}
+
+.profile-info p {
+    margin-bottom: 10px;
+}
+
+.profile-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+}
+
+.btn {
+    display: inline-block;
+    padding: 10px 20px;
+    background: #667eea;
+    color: white;
+    text-decoration: none;
+    border-radius: 5px;
+    border: none;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.btn:hover {
+    background: #5a67d8;
+}
+
+.btn-danger {
+    background: #e53e3e;
+}
+
+.btn-danger:hover {
+    background: #c53030;
+}
+</style>
+
+<%- include('partials/footer') %>

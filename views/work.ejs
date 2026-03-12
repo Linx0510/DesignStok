@@ -1,0 +1,619 @@
+<%- include('partials/header') %>
+
+<div class="work-detail-container">
+    <div class="work-detail">
+        <div class="work-detail-image">
+            <img src="<%= work.image_path %>" alt="<%= work.title %>">
+            
+            <% if (currentUser) { %>
+                <div class="work-actions">
+                    <button class="btn-action <%= isFavorited ? 'favorited' : '' %>" 
+                            onclick="toggleFavorite(`<%= work.id %>`)" 
+                            data-favorited="<%= isFavorited %>">
+                        <i class="<%= isFavorited ? 'fas' : 'far' %> fa-heart"></i>
+                        <span class="action-text">
+                            <%= isFavorited ? 'В избранном' : 'В избранное' %>
+                        </span>
+                    </button>
+                    
+                    <button class="btn-action" onclick="showReportModal()">
+                        <i class="fas fa-flag"></i>
+                        <span class="action-text">Пожаловаться</span>
+                    </button>
+                </div>
+            <% } %>
+        </div>
+        
+        <div class="work-detail-info">
+            <h1><%= work.title %></h1>
+            
+            <div class="work-stats">
+                <span><i class="fas fa-eye"></i> <%= work.views_count || 0 %> просмотров</span>
+                <span><i class="fas fa-heart"></i> <span id="favoritesCount"><%= work.favorites_count || 0 %></span> в избранном</span>
+                <span><i class="fas fa-calendar"></i> <%= new Date(work.created_at).toLocaleDateString('ru-RU') %></span>
+            </div>
+            
+            <div class="work-author-section">
+                <h3>Автор</h3>
+                <a href="/profile/<%= work.user_id %>" class="work-author-link">
+                    <% if (work.avatar_path) { %>
+                        <img src="<%= work.avatar_path %>" alt="<%= work.username %>" class="author-avatar">
+                    <% } else { %>
+                        <div class="author-avatar-placeholder"><%= work.username[0] %></div>
+                    <% } %>
+                    <div class="author-info">
+                        <span class="author-name"><%= work.username %></span>
+                        <% if (work.user_bio) { %>
+                            <span class="author-bio"><%= work.user_bio %></span>
+                        <% } %>
+                    </div>
+                </a>
+            </div>
+            
+            <% if (work.description) { %>
+                <div class="work-description-section">
+                    <h3>Описание</h3>
+                    <p class="work-description"><%= work.description %></p>
+                </div>
+            <% } %>
+            
+            <% if (work.tags && work.tags.length > 0) { %>
+                <div class="work-tags-section">
+                    <h3>Теги</h3>
+                    <div class="work-tags">
+                        <% work.tags.forEach(tag => { %>
+                            <a href="/works/search?q=<%= tag %>" class="tag">#<%= tag %></a>
+                        <% }) %>
+                    </div>
+                </div>
+            <% } %>
+            
+            <!-- Похожие работы -->
+            <% if (similarWorks && similarWorks.length > 0) { %>
+                <div class="similar-works">
+                    <h3>Похожие работы</h3>
+                    <div class="similar-works-grid">
+                        <% similarWorks.slice(0, 4).forEach(similar => { %>
+                            <a href="/works/<%= similar.id %>" class="similar-work">
+                                <img src="<%= similar.image_path %>" alt="<%= similar.title %>">
+                                <span class="similar-work-title"><%= similar.title %></span>
+                            </a>
+                        <% }) %>
+                    </div>
+                </div>
+            <% } %>
+        </div>
+    </div>
+</div>
+
+<!-- Модальное окно жалобы -->
+<div id="reportModal" class="modal">
+    <div class="modal-content">
+        <span class="close" onclick="hideReportModal()">&times;</span>
+        <h2>Пожаловаться на работу</h2>
+        
+        <form action="/works/<%= work.id %>/report" method="POST" class="report-form">
+            <div class="form-group">
+                <label for="reason">Причина жалобы</label>
+                <select id="reason" name="reason" required>
+                    <option value="">Выберите причину</option>
+                    <option value="copyright">Нарушение авторских прав</option>
+                    <option value="inappropriate">Неприемлемое содержание</option>
+                    <option value="spam">Спам</option>
+                    <option value="offensive">Оскорбительный контент</option>
+                    <option value="other">Другое</option>
+                </select>
+            </div>
+            
+            <div class="form-group" id="otherReason" style="display: none;">
+                <label for="otherReasonText">Опишите причину</label>
+                <textarea id="otherReasonText" name="other_reason" rows="3"></textarea>
+            </div>
+            
+            <button type="submit" class="btn btn-primary">Отправить жалобу</button>
+        </form>
+    </div>
+</div>
+
+<script>
+async function toggleFavorite(workId) {
+    const btn = event.currentTarget;
+    const isFavorited = btn.dataset.favorited === 'true';
+    
+    try {
+        const response = await fetch(`/works/${workId}/favorite`, {
+            method: isFavorited ? 'DELETE' : 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        if (response.ok) {
+            const data = await response.json();
+            
+            // Обновляем кнопку
+            btn.dataset.favorited = (!isFavorited).toString();
+            btn.classList.toggle('favorited');
+            
+            const icon = btn.querySelector('i');
+            icon.className = !isFavorited ? 'fas fa-heart' : 'far fa-heart';
+            
+            const text = btn.querySelector('.action-text');
+            text.textContent = !isFavorited ? 'В избранном' : 'В избранное';
+            
+            // Обновляем счетчик
+            const favoritesCount = document.getElementById('favoritesCount');
+            if (favoritesCount) {
+                let count = parseInt(favoritesCount.textContent);
+                count = !isFavorited ? count + 1 : count - 1;
+                favoritesCount.textContent = count;
+            }
+            
+            // Показываем уведомление
+            showNotification(
+                !isFavorited ? 'Добавлено в избранное' : 'Удалено из избранного',
+                'success'
+            );
+        }
+    } catch (error) {
+        console.error('Ошибка:', error);
+        showNotification('Произошла ошибка', 'error');
+    }
+}
+
+function showReportModal() {
+    document.getElementById('reportModal').style.display = 'block';
+}
+
+function hideReportModal() {
+    document.getElementById('reportModal').style.display = 'none';
+}
+
+// Показываем поле для другой причины
+document.getElementById('reason').addEventListener('change', function() {
+    const otherReason = document.getElementById('otherReason');
+    otherReason.style.display = this.value === 'other' ? 'block' : 'none';
+});
+
+// Отправка жалобы
+document.querySelector('.report-form').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(this);
+    const reason = formData.get('reason');
+    const otherReason = formData.get('other_reason');
+    
+    try {
+        const response = await fetch(this.action, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ 
+                reason: reason === 'other' ? otherReason : reason 
+            })
+        });
+        
+        if (response.ok) {
+            hideReportModal();
+            showNotification('Жалоба отправлена', 'success');
+        } else {
+            showNotification('Ошибка при отправке жалобы', 'error');
+        }
+    } catch (error) {
+        console.error('Ошибка:', error);
+        showNotification('Ошибка при отправке жалобы', 'error');
+    }
+});
+
+// Уведомления
+function showNotification(message, type) {
+    const notification = document.createElement('div');
+    notification.className = `notification notification-${type}`;
+    notification.innerHTML = `
+        <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'}"></i>
+        <span>${message}</span>
+    `;
+    
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+        notification.classList.add('fade-out');
+        setTimeout(() => notification.remove(), 300);
+    }, 3000);
+}
+
+// Закрытие модального окна при клике вне его
+window.onclick = function(event) {
+    const modal = document.getElementById('reportModal');
+    if (event.target == modal) {
+        modal.style.display = 'none';
+    }
+}
+
+// Клавиша Escape
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        hideReportModal();
+    }
+});
+</script>
+
+<style>
+.work-detail-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.work-detail {
+    display: grid;
+    grid-template-columns: 1fr 400px;
+    gap: 30px;
+    background: var(--white);
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+}
+
+.work-detail-image {
+    position: relative;
+    background: var(--dark);
+    min-height: 500px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.work-detail-image img {
+    max-width: 100%;
+    max-height: 80vh;
+    object-fit: contain;
+}
+
+.work-actions {
+    position: absolute;
+    bottom: 20px;
+    right: 20px;
+    display: flex;
+    gap: 10px;
+}
+
+.btn-action {
+    background: rgba(255,255,255,0.9);
+    border: none;
+    padding: 10px 20px;
+    border-radius: 30px;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--dark);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.3s;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+}
+
+.btn-action:hover {
+    background: var(--white);
+    transform: translateY(-2px);
+}
+
+.btn-action.favorited {
+    background: var(--primary);
+    color: var(--white);
+}
+
+.btn-action i {
+    font-size: 16px;
+}
+
+.work-detail-info {
+    padding: 30px;
+}
+
+.work-detail-info h1 {
+    font-size: 28px;
+    margin-bottom: 15px;
+    color: var(--dark);
+}
+
+.work-stats {
+    display: flex;
+    gap: 20px;
+    margin-bottom: 30px;
+    color: var(--gray);
+    font-size: 14px;
+}
+
+.work-stats i {
+    margin-right: 5px;
+}
+
+.work-author-section,
+.work-description-section,
+.work-tags-section {
+    margin-bottom: 30px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid var(--light-gray);
+}
+
+.work-author-section h3,
+.work-description-section h3,
+.work-tags-section h3,
+.similar-works h3 {
+    font-size: 16px;
+    margin-bottom: 15px;
+    color: var(--gray);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.work-author-link {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    text-decoration: none;
+    color: inherit;
+    padding: 10px;
+    border-radius: 5px;
+    transition: background 0.3s;
+}
+
+.work-author-link:hover {
+    background: var(--light);
+}
+
+.author-avatar,
+.author-avatar-placeholder {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.author-avatar-placeholder {
+    background: var(--primary);
+    color: var(--white);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    font-weight: 600;
+}
+
+.author-info {
+    flex: 1;
+}
+
+.author-name {
+    display: block;
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 5px;
+}
+
+.author-bio {
+    font-size: 14px;
+    color: var(--gray);
+}
+
+.work-description {
+    line-height: 1.8;
+    color: var(--dark);
+    white-space: pre-wrap;
+}
+
+.work-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.work-tags .tag {
+    padding: 8px 15px;
+    background: var(--light);
+    border-radius: 20px;
+    text-decoration: none;
+    color: var(--primary);
+    font-size: 14px;
+    transition: all 0.3s;
+}
+
+.work-tags .tag:hover {
+    background: var(--primary);
+    color: var(--white);
+}
+
+.similar-works {
+    margin-top: 30px;
+}
+
+.similar-works-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 15px;
+}
+
+.similar-work {
+    position: relative;
+    aspect-ratio: 1;
+    overflow: hidden;
+    border-radius: 5px;
+    text-decoration: none;
+}
+
+.similar-work img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s;
+}
+
+.similar-work:hover img {
+    transform: scale(1.1);
+}
+
+.similar-work-title {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 10px;
+    background: linear-gradient(to top, rgba(0,0,0,0.7), transparent);
+    color: var(--white);
+    font-size: 12px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Модальное окно */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.5);
+}
+
+.modal-content {
+    background: var(--white);
+    margin: 50px auto;
+    padding: 30px;
+    max-width: 500px;
+    border-radius: 10px;
+    position: relative;
+}
+
+.close {
+    position: absolute;
+    right: 20px;
+    top: 10px;
+    font-size: 28px;
+    cursor: pointer;
+    color: var(--gray);
+}
+
+.close:hover {
+    color: var(--dark);
+}
+
+.report-form .form-group {
+    margin-bottom: 20px;
+}
+
+.report-form label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 500;
+}
+
+.report-form select,
+.report-form textarea {
+    width: 100%;
+    padding: 10px;
+    border: 2px solid var(--light-gray);
+    border-radius: 5px;
+    font-family: inherit;
+}
+
+.report-form textarea {
+    resize: vertical;
+}
+
+/* Уведомления */
+.notification {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: var(--white);
+    color: var(--dark);
+    padding: 15px 25px;
+    border-radius: 5px;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    z-index: 2000;
+    animation: slideIn 0.3s;
+}
+
+.notification.success {
+    border-left: 4px solid var(--success);
+}
+
+.notification.error {
+    border-left: 4px solid var(--error);
+}
+
+.notification i {
+    font-size: 20px;
+}
+
+.notification.success i {
+    color: var(--success);
+}
+
+.notification.error i {
+    color: var(--error);
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+.fade-out {
+    animation: fadeOut 0.3s forwards;
+}
+
+@keyframes fadeOut {
+    to {
+        opacity: 0;
+        transform: translateX(100%);
+    }
+}
+
+@media (max-width: 968px) {
+    .work-detail {
+        grid-template-columns: 1fr;
+    }
+    
+    .work-detail-image {
+        min-height: 300px;
+    }
+    
+    .work-actions {
+        position: static;
+        justify-content: center;
+        padding: 20px;
+    }
+    
+    .similar-works-grid {
+        grid-template-columns: repeat(4, 1fr);
+    }
+}
+
+@media (max-width: 768px) {
+    .work-stats {
+        flex-wrap: wrap;
+    }
+    
+    .similar-works-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+</style>
+
+<%- include('partials/footer') %>

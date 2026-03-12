@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %> | DesignStok</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <a href="/" class="logo">DesignStok</a>
+                
+                <form action="/works/search" method="GET" class="search-form">
+                    <input type="text" name="q" placeholder="Поиск работ..." value="<%= typeof query !== 'undefined' ? query : '' %>">
+                    <button type="submit"><i class="fas fa-search"></i></button>
+                </form>
+                
+                <nav class="nav">
+                    <% if (currentUser) { %>
+                        <a href="/upload" class="btn btn-primary">
+                            <i class="fas fa-upload"></i> Загрузить
+                        </a>
+                        <div class="profile-menu">
+                            <a href="/profile" class="profile-link">
+                                <% if (currentUser.avatar_path) { %>
+                                    <img src="<%= currentUser.avatar_path %>" alt="<%= currentUser.username %>" class="avatar-small">
+                                <% } else { %>
+                                    <div class="avatar-placeholder"><%= currentUser.username[0] %></div>
+                                <% } %>
+                                <span><%= currentUser.username %></span>
+                            </a>
+                            <div class="dropdown-menu">
+                                <a href="/profile">Мой профиль</a>
+                                <% if (currentUser.role === 'admin') { %>
+                                    <a href="/admin">Панель администратора</a>
+                                <% } %>
+                                <a href="/logout">Выйти</a>
+                            </div>
+                        </div>
+                    <% } else { %>
+                        <a href="/auth/login">Вход</a>
+                        <a href="/auth/register">Регистрация</a>
+                    <% } %>
+                </nav>
+            </div>
+        </div>
+    </header>
+    
+    <main class="main">
+        <% if (error && error.length > 0) { %>
+            <div class="alert alert-error">
+                <%= error %>
+            </div>
+        <% } %>
+        
+        <% if (success && success.length > 0) { %>
+            <div class="alert alert-success">
+                <%= success %>
+            </div>
+        <% } %>

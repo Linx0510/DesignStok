@@ -1,0 +1,51 @@
+<%- include('partials/header') %>
+
+<div class="container">
+    <div class="works-grid">
+        <% if (works && works.length > 0) { %>
+            <% works.forEach(work => { %>
+                <div class="work-card">
+                    <a href="/works/<%= work.id %>" class="work-link">
+                        <div class="work-image">
+                            <img src="<%= work.image_path %>" alt="<%= work.title %>">
+                            <div class="work-overlay">
+                                <span class="work-views">
+                                    <i class="fas fa-eye"></i> <%= work.views_count || 0 %>
+                                </span>
+                                <span class="work-favorites">
+                                    <i class="fas fa-heart"></i> <%= work.favorites_count || 0 %>
+                                </span>
+                            </div>
+                        </div>
+                        <div class="work-info">
+                            <h3 class="work-title"><%= work.title %></h3>
+                            <div class="work-author">
+                                <img src="<%= work.avatar_path || '/images/default-avatar.png' %>" alt="<%= work.username %>" class="avatar-mini">
+                                <span><%= work.username %></span>
+                            </div>
+                            <% if (work.tags && work.tags[0]) { %>
+                                <div class="work-tags">
+                                    <% work.tags.slice(0, 3).forEach(tag => { %>
+                                        <span class="tag">#<%= tag %></span>
+                                    <% }) %>
+                                </div>
+                            <% } %>
+                        </div>
+                    </a>
+                </div>
+            <% }) %>
+        <% } else { %>
+            <div class="empty-state">
+                <i class="fas fa-images"></i>
+                <h3>Пока нет работ</h3>
+                <% if (currentUser) { %>
+                    <a href="/upload" class="btn btn-primary">Загрузить первую работу</a>
+                <% } else { %>
+                    <p>Зарегистрируйтесь, чтобы начать делиться своими работами</p>
+                <% } %>
+            </div>
+        <% } %>
+    </div>
+</div>
+
+<%- include('partials/footer') %>
