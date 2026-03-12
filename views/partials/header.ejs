@@ -29,7 +29,7 @@
                                 <% if (currentUser.avatar_path) { %>
                                     <img src="<%= currentUser.avatar_path %>" alt="<%= currentUser.username %>" class="avatar-small">
                                 <% } else { %>
-                                    <div class="avatar-placeholder"><%= currentUser.username[0] %></div>
+                                    <div class="avatar-placeholder"><%= currentUser.username && currentUser.username.charAt(0) ? currentUser.username.charAt(0) : '?' %></div>
                                 <% } %>
                                 <span><%= currentUser.username %></span>
                             </a>
