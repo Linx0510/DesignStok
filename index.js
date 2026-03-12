@@ -47,12 +47,13 @@ app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 
 // Routes
-// Routes
+const userRoutes = require('./routes/users');
+
 app.use('/', require('./routes/index'));
 app.use('/auth', require('./routes/auth'));
 app.use('/works', require('./routes/works'));
-app.use('/users', require('./routes/users'));
-app.use('/', require('./routes/profile'));
+app.use('/', userRoutes);
+app.use('/users', userRoutes);
 app.use('/admin', require('./routes/admin'));
 
 // 404 handler
