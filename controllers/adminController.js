@@ -241,6 +241,7 @@ exports.getComplaints = async (req, res) => {
             SELECT c.*, 
                    u1.username as reporter_name,
                    u2.username as work_owner_name,
+                   u2.id as work_owner_id,
                    w.title as work_title,
                    w.image_path,
                    w.id as work_id
@@ -263,6 +264,7 @@ exports.getComplaints = async (req, res) => {
         res.render('admin/complaints', {
             title: 'Жалобы',
             complaints: complaints.rows,
+            totalCount,
             currentPage: page,
             totalPages,
             filter,
