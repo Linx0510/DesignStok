@@ -49,7 +49,7 @@
                                 <td><%= item.username %></td>
                                 <td><%= item.email %></td>
                                 <td>
-                                    <select class="role-select" onchange="updateRole(<%= item.id %>, this.value)">
+                                    <select class="role-select" onchange="updateRole(`<%= item.id %>, this.value`)">
                                         <option value="user" <%= item.role === 'user' ? 'selected' : '' %>>Пользователь</option>
                                         <option value="admin" <%= item.role === 'admin' ? 'selected' : '' %>>Админ</option>
                                     </select>
@@ -58,7 +58,7 @@
                                 <td><%= new Date(item.created_at).toLocaleDateString('ru-RU') %></td>
                                 <td>
                                     <% if (!user || user.id !== item.id) { %>
-                                        <button class="btn btn-danger btn-sm" onclick="deleteUser(<%= item.id %>)">
+                                        <button class="btn btn-danger btn-sm" onclick="deleteUser(`<%= item.id %>`)">
                                             Удалить
                                         </button>
                                     <% } else { %>
@@ -141,76 +141,3 @@ async function deleteUser(userId) {
     }
 }
 </script>
-
-<style>
-.users-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 16px;
-}
-
-.search-form {
-    display: flex;
-    gap: 8px;
-    align-items: center;
-}
-
-.search-form input {
-    min-width: 280px;
-    padding: 10px;
-    border: 1px solid var(--light-gray);
-    border-radius: 6px;
-}
-
-.users-table-wrap {
-    background: var(--white);
-    border-radius: 10px;
-    overflow-x: auto;
-    box-shadow: 0 3px 10px rgba(0,0,0,0.1);
-}
-
-.users-table {
-    width: 100%;
-    border-collapse: collapse;
-}
-
-.users-table th,
-.users-table td {
-    padding: 12px;
-    border-bottom: 1px solid var(--light-gray);
-    text-align: left;
-    font-size: 14px;
-}
-
-.users-table th {
-    background: #f7f8fa;
-}
-
-.role-select {
-    padding: 6px 8px;
-    border: 1px solid var(--light-gray);
-    border-radius: 6px;
-    background: var(--white);
-}
-
-.muted {
-    color: var(--gray);
-    font-size: 13px;
-}
-
-@media (max-width: 900px) {
-    .users-header {
-        flex-direction: column;
-        align-items: stretch;
-    }
-
-    .search-form {
-        flex-wrap: wrap;
-    }
-
-    .search-form input {
-        min-width: 100%;
-    }
-}
-</style>
