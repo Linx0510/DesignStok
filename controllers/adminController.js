@@ -240,8 +240,24 @@ exports.getComplaints = async (req, res) => {
             countWhereClause = "WHERE status = 'closed'";
         }
         
+        const reporterColumnResult = await db.query(`
+            SELECT column_name
+            FROM information_schema.columns
+            WHERE table_name = 'complaints'
+              AND column_name IN ('reporter_user_id', 'reporter_id', 'user_id')
+            ORDER BY CASE column_name
+                WHEN 'reporter_user_id' THEN 1
+                WHEN 'reporter_id' THEN 2
+                WHEN 'user_id' THEN 3
+            END
+            LIMIT 1
+        `);
+
+        const reporterColumn = reporterColumnResult.rows[0]?.column_name || 'reporter_user_id';
+
         const complaints = await db.query(`
             SELECT c.*, 
+                   c.${reporterColumn} as reporter_user_id,
                    u1.username as reporter_name,
                    u2.username as work_owner_name,
                    u2.id as work_owner_id,
@@ -249,7 +265,7 @@ exports.getComplaints = async (req, res) => {
                    w.image_path,
                    w.id as work_id
             FROM complaints c
-            LEFT JOIN users u1 ON c.reporter_user_id = u1.id
+            LEFT JOIN users u1 ON c.${reporterColumn} = u1.id
             JOIN works w ON c.work_id = w.id
             JOIN users u2 ON w.user_id = u2.id
             ${whereClause}
