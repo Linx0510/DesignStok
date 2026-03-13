@@ -2,6 +2,19 @@ const Work = require('../models/Work');
 const User = require('../models/User');
 const db = require('../config/database');
 
+
+async function complaintsStatusColumnExists() {
+    const result = await db.query(`
+        SELECT EXISTS (
+            SELECT 1
+            FROM information_schema.columns
+            WHERE table_name = 'complaints' AND column_name = 'status'
+        )
+    `);
+
+    return result.rows[0].exists;
+}
+
 exports.getDashboard = async (req, res) => {
     try {
         // Статистика
@@ -229,16 +242,25 @@ exports.getComplaints = async (req, res) => {
         const page = parseInt(req.query.page) || 1;
         const limit = 20;
         const offset = (page - 1) * limit;
-        
+        const hasStatusColumn = await complaintsStatusColumnExists();
+
+        let whereClause = '';
         let countWhereClause = '';
-        if (filter === 'open') {
-            countWhereClause = "WHERE status = 'open'";
-        } else if (filter === 'closed') {
-            countWhereClause = "WHERE status = 'closed'";
+
+        if (hasStatusColumn) {
+            if (filter === 'open') {
+                whereClause = "WHERE c.status = 'open'";
+                countWhereClause = "WHERE status = 'open'";
+            } else if (filter === 'closed') {
+                whereClause = "WHERE c.status = 'closed'";
+                countWhereClause = "WHERE status = 'closed'";
+            }
         }
-        
+
+        const statusSelect = hasStatusColumn ? 'c.*' : "c.*, 'open'::text AS status";
+
         const complaints = await db.query(`
-            SELECT c.*, 
+            SELECT ${statusSelect},
                    u1.username as reporter_name,
                    u2.username as work_owner_name,
                    u2.id as work_owner_id,
@@ -253,14 +275,13 @@ exports.getComplaints = async (req, res) => {
             ORDER BY c.created_at DESC
             LIMIT $1 OFFSET $2
         `, [limit, offset]);
-        
-        // Получаем общее количество
+
         const countResult = await db.query(`
            SELECT COUNT(*) FROM complaints ${countWhereClause}
         `);
         const totalCount = parseInt(countResult.rows[0].count);
         const totalPages = Math.ceil(totalCount / limit);
-        
+
         res.render('admin/complaints', {
             title: 'Жалобы',
             complaints: complaints.rows,
@@ -272,15 +293,19 @@ exports.getComplaints = async (req, res) => {
             path: req.path
         });
     } catch (error) {
-        console.error(error);
+        console.error('Ошибка загрузки жалоб:', error.message);
         res.status(500).render('500', { title: 'Ошибка сервера' });
     }
 };
 
 exports.closeComplaint = async (req, res) => {
     try {
-        await db.query("UPDATE complaints SET status = 'closed' WHERE id = $1", [req.params.id]);
-        
+        const hasStatusColumn = await complaintsStatusColumnExists();
+
+        if (hasStatusColumn) {
+            await db.query("UPDATE complaints SET status = 'closed' WHERE id = $1", [req.params.id]);
+        }
+
         if (req.xhr) {
             res.json({ success: true, message: 'Жалоба закрыта' });
         } else {
@@ -288,7 +313,7 @@ exports.closeComplaint = async (req, res) => {
             res.redirect('/admin/complaints');
         }
     } catch (error) {
-        console.error(error);
+        console.error('Ошибка закрытия жалобы:', error.message);
         if (req.xhr) {
             res.status(500).json({ success: false, message: 'Ошибка при закрытии жалобы' });
         } else {
