@@ -47,6 +47,39 @@
             <% } %>
         </div>
 
+        <% if (currentUser && currentUser.id === user.id && currentUser.role === 'user') { %>
+            <div class="profile-notifications">
+                <div class="notifications-header">
+                    <h3>Уведомления от администратора</h3>
+                    <% const unreadCount = notifications.filter(item => !item.is_read).length; %>
+                    <% if (notifications.length > 0) { %>
+                        <button type="button" class="btn btn-outline btn-sm" id="markAllNotificationsRead">
+                            Отметить все как прочитанные
+                        </button>
+                    <% } %>
+                </div>
+
+                <% if (notifications.length === 0) { %>
+                    <p class="notifications-empty">Пока нет уведомлений.</p>
+                <% } else { %>
+                    <p class="notifications-meta">Непрочитано: <span id="unreadNotificationsCount"><%= unreadCount %></span></p>
+                    <div class="notifications-list" id="notificationsList">
+                        <% notifications.forEach((notification) => { %>
+                            <article class="notification-item <%= notification.is_read ? 'notification-read' : 'notification-unread' %>" data-notification-id="<%= notification.id %>">
+                                <p><%= notification.message %></p>
+                                <div class="notification-item-footer">
+                                    <time><%= new Date(notification.created_at).toLocaleString('ru-RU') %></time>
+                                    <% if (!notification.is_read) { %>
+                                        <button type="button" class="btn btn-sm mark-read-btn" data-notification-id="<%= notification.id %>">Прочитано</button>
+                                    <% } %>
+                                </div>
+                            </article>
+                        <% }) %>
+                    </div>
+                <% } %>
+            </div>
+        <% } %>
+
         <% if (currentUser && currentUser.id === user.id) { %>
             <div class="profile-actions">
                 <a href="/profile" class="btn">Редактировать профиль</a>
@@ -176,6 +209,66 @@
     justify-content: center;
 }
 
+.profile-notifications {
+    margin-bottom: 30px;
+    padding: 20px;
+    background: #f7fafc;
+    border-radius: 10px;
+}
+
+.notifications-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+.notifications-header h3 {
+    margin: 0;
+    color: #4a5568;
+}
+
+.notifications-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.notification-item {
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 14px;
+}
+
+.notification-unread {
+    border-left: 4px solid #667eea;
+}
+
+.notification-read {
+    opacity: 0.75;
+}
+
+.notification-item p {
+    margin: 0 0 8px;
+}
+
+.notification-item-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+    color: #718096;
+    font-size: 13px;
+}
+
+.notifications-meta,
+.notifications-empty {
+    color: #718096;
+    margin-bottom: 12px;
+}
+
 .btn {
     display: inline-block;
     padding: 10px 20px;
@@ -186,6 +279,22 @@
     border: none;
     cursor: pointer;
     font-size: 14px;
+}
+
+.btn-outline {
+    background: transparent;
+    color: #667eea;
+    border: 1px solid #667eea;
+}
+
+.btn-outline:hover {
+    background: #667eea;
+    color: #fff;
+}
+
+.btn-sm {
+    padding: 6px 12px;
+    font-size: 12px;
 }
 
 .btn:hover {
@@ -200,5 +309,92 @@
     background: #c53030;
 }
 </style>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const notificationsList = document.getElementById('notificationsList');
+    const markAllButton = document.getElementById('markAllNotificationsRead');
+    const unreadCountElement = document.getElementById('unreadNotificationsCount');
+
+    if (!notificationsList) {
+        return;
+    }
+
+    const updateUnreadCount = () => {
+        if (!unreadCountElement) {
+            return;
+        }
+
+        const unreadItems = notificationsList.querySelectorAll('.notification-unread').length;
+        unreadCountElement.textContent = unreadItems;
+    };
+
+    notificationsList.addEventListener('click', async (event) => {
+        const button = event.target.closest('.mark-read-btn');
+
+        if (!button) {
+            return;
+        }
+
+        const { notificationId } = button.dataset;
+
+        try {
+            const response = await fetch(`/notifications/${notificationId}/read`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            const result = await response.json();
+
+            if (!response.ok || !result.success) {
+                return;
+            }
+
+            const notificationItem = button.closest('.notification-item');
+
+            if (notificationItem) {
+                notificationItem.classList.remove('notification-unread');
+                notificationItem.classList.add('notification-read');
+            }
+
+            button.remove();
+            updateUnreadCount();
+        } catch (error) {
+            console.error('Ошибка чтения уведомления:', error);
+        }
+    });
+
+    if (markAllButton) {
+        markAllButton.addEventListener('click', async () => {
+            try {
+                const response = await fetch('/notifications/read-all', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                const result = await response.json();
+
+                if (!response.ok || !result.success) {
+                    return;
+                }
+
+                notificationsList.querySelectorAll('.notification-item').forEach((item) => {
+                    item.classList.remove('notification-unread');
+                    item.classList.add('notification-read');
+                });
+
+                notificationsList.querySelectorAll('.mark-read-btn').forEach((button) => button.remove());
+                updateUnreadCount();
+            } catch (error) {
+                console.error('Ошибка массового чтения уведомлений:', error);
+            }
+        });
+    }
+});
+</script>
 
 <%- include('partials/footer') %>
