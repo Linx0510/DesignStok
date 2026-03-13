@@ -1,0 +1,121 @@
+<%- include('../partials/header') %>
+
+<div class="admin-container">
+    <div class="admin-sidebar">
+        <div class="admin-nav">
+            <a href="/admin" class="admin-nav-link">Дашборд</a>
+            <a href="/admin/moderation" class="admin-nav-link">Модерация</a>
+            <a href="/admin/complaints" class="admin-nav-link">Жалобы</a>
+            <a href="/admin/users" class="admin-nav-link">Пользователи</a>
+            <a href="/admin/settings" class="admin-nav-link active">Настройки</a>
+        </div>
+    </div>
+
+    <div class="admin-content">
+        <div class="content-header">
+            <h1>Настройки сайта</h1>
+        </div>
+
+        <div class="settings-card">
+            <form method="POST" action="/admin/settings" class="settings-form">
+                <div class="form-group">
+                    <label for="site_name">Название сайта</label>
+                    <input
+                        type="text"
+                        id="site_name"
+                        name="site_name"
+                        value="<%= settings.site_name || '' %>"
+                        required
+                    >
+                </div>
+
+                <div class="form-group">
+                    <label for="site_description">Описание сайта</label>
+                    <textarea
+                        id="site_description"
+                        name="site_description"
+                        rows="4"
+                        placeholder="Короткое описание проекта"
+                    ><%= settings.site_description || '' %></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="items_per_page">Элементов на страницу</label>
+                    <input
+                        type="number"
+                        id="items_per_page"
+                        name="items_per_page"
+                        min="1"
+                        max="200"
+                        value="<%= settings.items_per_page || 20 %>"
+                        required
+                    >
+                </div>
+
+                <div class="form-group checkbox-group">
+                    <label class="checkbox-label">
+                        <input
+                            type="checkbox"
+                            name="allow_registrations"
+                            <%= settings.allow_registrations ? 'checked' : '' %>
+                        >
+                        Разрешить новые регистрации
+                    </label>
+                </div>
+
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save"></i> Сохранить настройки
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<style>
+.settings-card {
+    background: var(--white);
+    border-radius: 10px;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+    padding: 24px;
+    max-width: 720px;
+}
+
+.settings-form {
+    display: grid;
+    gap: 16px;
+}
+
+.settings-form label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+}
+
+.settings-form input[type="text"],
+.settings-form input[type="number"],
+.settings-form textarea {
+    width: 100%;
+    border: 1px solid var(--light-gray);
+    border-radius: 6px;
+    padding: 10px;
+    font-size: 14px;
+}
+
+.checkbox-group {
+    margin-top: 6px;
+}
+
+.checkbox-label {
+    display: inline-flex !important;
+    align-items: center;
+    gap: 10px;
+    font-weight: 500 !important;
+    margin: 0 !important;
+}
+
+@media (max-width: 900px) {
+    .settings-card {
+        padding: 16px;
+    }
+}
+</style>

@@ -15,5 +15,7 @@ router.post('/works/:id/delete', adminController.deleteWork);
 router.get('/users', adminController.getUsers);
 router.post('/users/:id/role', adminController.updateUserRole);
 router.delete('/users/:id', adminController.deleteUser);
+router.get('/settings', adminController.getSettings);
+router.post('/settings', adminController.updateSettings);
 
 module.exports = router;
