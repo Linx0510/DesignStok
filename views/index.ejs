@@ -32,6 +32,26 @@
                             <% } %>
                         </div>
                     </a>
+
+                    <% if (currentUser && currentUser.id !== work.user_id) { %>
+                        <div class="work-card-actions">
+                            <button
+                                type="button"
+                                class="report-link"
+                                onclick="openReportModal('<%= work.id %>', '<%= (work.title || '').replace(/'/g, "\\'") %>')"
+                            >
+                                <i class="fas fa-flag"></i>
+                                Пожаловаться
+                            </button>
+                        </div>
+                    <% } else if (!currentUser) { %>
+                        <div class="work-card-actions">
+                            <a href="/login" class="report-link report-link-login">
+                                <i class="fas fa-flag"></i>
+                                Войти, чтобы пожаловаться
+                            </a>
+                        </div>
+                    <% } %>
                 </div>
             <% }) %>
         <% } else { %>
@@ -47,5 +67,99 @@
         <% } %>
     </div>
 </div>
+
+<div id="reportWorkModal" class="modal report-work-modal">
+    <div class="modal-content">
+        <span class="close" onclick="closeReportModal()">&times;</span>
+        <h2>Пожаловаться на работу</h2>
+        <p class="report-work-title" id="reportWorkTitle"></p>
+
+        <form id="reportWorkForm" method="POST">
+            <input type="hidden" name="workId" id="reportWorkId">
+            <div class="form-group">
+                <label for="reportReason">Причина жалобы:</label>
+                <textarea id="reportReason" name="reason" rows="4" placeholder="Опишите причину жалобы..." required></textarea>
+            </div>
+            <div class="modal-actions">
+                <button type="submit" class="btn btn-danger">
+                    <i class="fas fa-paper-plane"></i> Отправить жалобу
+                </button>
+                <button type="button" class="btn btn-outline" onclick="closeReportModal()">Отмена</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+function openReportModal(workId, workTitle) {
+    const modal = document.getElementById('reportWorkModal');
+    const form = document.getElementById('reportWorkForm');
+
+    document.getElementById('reportWorkTitle').textContent = `Работа: ${workTitle}`;
+    document.getElementById('reportWorkId').value = workId;
+    form.action = `/works/${workId}/report`;
+    modal.style.display = 'block';
+}
+
+function closeReportModal() {
+    document.getElementById('reportWorkModal').style.display = 'none';
+    document.getElementById('reportReason').value = '';
+}
+
+window.addEventListener('click', (event) => {
+    const modal = document.getElementById('reportWorkModal');
+    if (event.target === modal) {
+        closeReportModal();
+    }
+});
+
+document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape') {
+        closeReportModal();
+    }
+});
+</script>
+
+<style>
+.work-card-actions {
+    padding: 0 15px 15px;
+}
+
+.report-link {
+    width: 100%;
+    border: none;
+    background: transparent;
+    color: var(--gray);
+    text-align: left;
+    cursor: pointer;
+    padding: 8px 10px;
+    border-radius: 8px;
+    transition: 0.2s;
+}
+
+.report-link:hover {
+    background: #fff2f2;
+    color: var(--error);
+}
+
+
+.report-link-login {
+    display: block;
+    text-decoration: none;
+}
+.report-work-title {
+    color: var(--gray);
+    margin-bottom: 14px;
+}
+
+#reportReason {
+    width: 100%;
+    border: 2px solid var(--light-gray);
+    border-radius: 8px;
+    padding: 10px;
+    resize: vertical;
+    font-family: inherit;
+}
+</style>
 
 <%- include('partials/footer') %>

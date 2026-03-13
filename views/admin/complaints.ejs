@@ -1,6 +1,6 @@
 <%- include('../partials/header') %>
 
-<div class="admin-container">
+<div class="admin-container complaints-page">
     <div class="admin-sidebar">
         <div class="admin-nav">
             <a href="/admin" class="admin-nav-link">Дашборд</a>
@@ -10,30 +10,61 @@
             <a href="/admin/settings" class="admin-nav-link">Настройки</a>
         </div>
     </div>
-    
+
     <div class="admin-content">
-        <div class="content-header">
-            <h1>Управление жалобами</h1>
-            <div class="filter-tabs">
-                <a href="/admin/complaints?filter=open" class="filter-tab <%= filter === 'open' ? 'active' : '' %>">
-                    Открытые
-                    <% if (complaints.filter(c => c.status === 'open').length > 0) { %>
-                        <span class="badge"><%= complaints.filter(c => c.status === 'open').length %></span>
-                    <% } %>
-                </a>
-                <a href="/admin/complaints?filter=closed" class="filter-tab <%= filter === 'closed' ? 'active' : '' %>">
-                    Закрытые
-                </a>
+        <div class="content-header complaints-header">
+            <div>
+                <h1>Жалобы</h1>
+                <p class="header-subtitle">Проверка обращений пользователей и быстрые действия по нарушениям.</p>
+            </div>
+            <div class="complaints-summary">
+                <div class="summary-item open">
+                    <span class="summary-label">Открытые</span>
+                    <strong class="summary-value"><%= complaints.filter(c => c.status === 'open').length %></strong>
+                </div>
+                <div class="summary-item total">
+                    <span class="summary-label">Всего в фильтре</span>
+                    <strong class="summary-value"><%= totalCount %></strong>
+                </div>
             </div>
         </div>
-        
+
+        <div class="complaints-toolbar">
+            <div class="filter-tabs">
+                <a href="/admin/complaints?filter=open" class="filter-tab <%= filter === 'open' ? 'active' : '' %>">
+                    <i class="fas fa-unlock"></i>
+                    Открытые
+                </a>
+                <a href="/admin/complaints?filter=closed" class="filter-tab <%= filter === 'closed' ? 'active' : '' %>">
+                    <i class="fas fa-lock"></i>
+                    Закрытые
+                </a>
+                <a href="/admin/complaints?filter=all" class="filter-tab <%= filter === 'all' ? 'active' : '' %>">
+                    <i class="fas fa-list"></i>
+                    Все
+                </a>
+            </div>
+
+            <div class="search-box">
+                <i class="fas fa-search"></i>
+                <input type="text" id="complaintSearch" placeholder="Поиск по названию работы, автору или причине...">
+            </div>
+        </div>
+
         <% if (complaints && complaints.length > 0) { %>
-            <div class="complaints-list">
+            <div class="complaints-list" id="complaintsList">
                 <% complaints.forEach(complaint => { %>
-                    <div class="complaint-card <%= complaint.status %>" data-id="<%= complaint.id %>">
-                        <div class="complaint-header">
+                    <article
+                        class="complaint-card <%= complaint.status %>"
+                        data-id="<%= complaint.id %>"
+                        data-title="<%= (complaint.work_title || '').toLowerCase() %>"
+                        data-reporter="<%= (complaint.reporter_name || '').toLowerCase() %>"
+                        data-owner="<%= (complaint.work_owner_name || '').toLowerCase() %>"
+                        data-reason="<%= (complaint.reason || '').toLowerCase() %>"
+                    >
+                        <header class="complaint-header">
                             <div class="complaint-meta">
-                                <span class="complaint-id">#<%= complaint.id %></span>
+                                <span class="complaint-id">Жалоба #<%= complaint.id %></span>
                                 <span class="complaint-date">
                                     <i class="fas fa-clock"></i>
                                     <%= new Date(complaint.created_at).toLocaleString('ru-RU') %>
@@ -42,84 +73,90 @@
                                     <%= complaint.status === 'open' ? 'Открыта' : 'Закрыта' %>
                                 </span>
                             </div>
-                            
-                            <% if (complaint.status === 'open') { %>
-                                <button class="btn-close-complaint" onclick="closeComplaint(`<%= complaint.id %>`)">
-                                    <i class="fas fa-check"></i> Закрыть жалобу
-                                </button>
-                            <% } %>
-                        </div>
-                        
+
+                            <div class="header-actions">
+                                <% if (complaint.status === 'open') { %>
+                                    <button class="btn-close-complaint" onclick="closeComplaint(`<%= complaint.id %>`)">
+                                        <i class="fas fa-check"></i> Закрыть
+                                    </button>
+                                <% } %>
+                            </div>
+                        </header>
+
                         <div class="complaint-content">
                             <div class="complaint-info">
-                                <p><strong>Пожаловался:</strong> 
-                                    <a href="/profile/<%= complaint.reporter_user_id %>">
-                                        <%= complaint.reporter_name || 'Пользователь удален' %>
-                                    </a>
+                                <p>
+                                    <strong>Кто пожаловался:</strong>
+                                    <% if (complaint.reporter_user_id) { %>
+                                        <a href="/profile/<%= complaint.reporter_user_id %>">
+                                            <%= complaint.reporter_name || 'Пользователь удален' %>
+                                        </a>
+                                    <% } else { %>
+                                        <span>Пользователь удален</span>
+                                    <% } %>
                                 </p>
-                                <p><strong>На работу:</strong> 
+                                <p>
+                                    <strong>Работа:</strong>
                                     <a href="/works/<%= complaint.work_id %>" target="_blank">
                                         <%= complaint.work_title %>
                                     </a>
                                 </p>
-                                <p><strong>Автор работы:</strong> 
+                                <p>
+                                    <strong>Автор работы:</strong>
                                     <a href="/profile/<%= complaint.work_owner_id %>">
                                         <%= complaint.work_owner_name %>
                                     </a>
                                 </p>
-                                <p><strong>Причина:</strong> <%= complaint.reason %></p>
+                                <p class="complaint-reason"><strong>Причина:</strong> <%= complaint.reason %></p>
                             </div>
-                            
+
                             <div class="complaint-work-preview">
                                 <img src="<%= complaint.image_path %>" alt="<%= complaint.work_title %>">
                                 <div class="complaint-actions">
                                     <a href="/works/<%= complaint.work_id %>" class="btn btn-outline btn-sm" target="_blank">
-                                        <i class="fas fa-eye"></i> Просмотр
+                                        <i class="fas fa-eye"></i> Открыть
                                     </a>
                                     <button class="btn btn-danger btn-sm" onclick="showDeleteModal(`<%= complaint.work_id %>`, `<%= complaint.work_title %>`)">
-                                        <i class="fas fa-trash"></i> Удалить работу
+                                        <i class="fas fa-trash"></i> Удалить
                                     </button>
                                 </div>
                             </div>
                         </div>
-                    </div>
+                    </article>
                 <% }) %>
             </div>
-            
-            <!-- Пагинация -->
+
             <% if (totalPages > 1) { %>
                 <div class="pagination">
                     <% for(let i = 1; i <= totalPages; i++) { %>
-                        <a href="/admin/complaints?page=<%= i %>&filter=<%= filter %>" 
-                           class="page <%= currentPage === i ? 'active' : '' %>">
+                        <a href="/admin/complaints?page=<%= i %>&filter=<%= filter %>" class="page <%= currentPage === i ? 'active' : '' %>">
                             <%= i %>
                         </a>
                     <% } %>
                 </div>
             <% } %>
-            
+
         <% } else { %>
             <div class="empty-state">
                 <i class="fas fa-flag"></i>
-                <h3>Нет жалоб</h3>
-                <p>Список жалоб пуст</p>
+                <h3>Жалоб пока нет</h3>
+                <p>Список жалоб пуст. Новые обращения появятся здесь.</p>
             </div>
         <% } %>
     </div>
 </div>
 
-<!-- Модальное окно удаления работы -->
 <div id="deleteWorkModal" class="modal">
     <div class="modal-content">
         <span class="close" onclick="hideDeleteModal()">&times;</span>
         <h2>Удаление работы</h2>
-        <p>Вы уверены, что хотите удалить работу "<span id="workTitle"></span>"?</p>
-        
+        <p>Вы уверены, что хотите удалить работу «<span id="workTitle"></span>»?</p>
+
         <div class="form-group">
             <label for="deleteReason">Причина удаления:</label>
             <textarea id="deleteReason" rows="3" placeholder="Укажите причину удаления..."></textarea>
         </div>
-        
+
         <div class="modal-actions">
             <button class="btn btn-danger" onclick="confirmDelete()">
                 <i class="fas fa-trash"></i> Удалить
@@ -134,34 +171,38 @@ let currentWorkId = null;
 
 function closeComplaint(complaintId) {
     if (!confirm('Закрыть жалобу?')) return;
-    
+
     fetch(`/admin/complaints/${complaintId}/close`, {
         method: 'POST',
         headers: {
             'X-Requested-With': 'XMLHttpRequest'
         }
     })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            const complaint = document.querySelector(`.complaint-card[data-id="${complaintId}"]`);
-            complaint.classList.remove('open');
-            complaint.classList.add('closed');
-            
-            const statusBadge = complaint.querySelector('.complaint-status');
-            statusBadge.className = 'complaint-status status-closed';
-            statusBadge.textContent = 'Закрыта';
-            
-            const closeBtn = complaint.querySelector('.btn-close-complaint');
-            if (closeBtn) closeBtn.remove();
-            
-            showNotification('Жалоба закрыта', 'success');
-        }
-    })
-    .catch(error => {
-        console.error('Ошибка:', error);
-        showNotification('Ошибка при закрытии жалобы', 'error');
-    });
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const complaint = document.querySelector(`.complaint-card[data-id="${complaintId}"]`);
+                if (!complaint) return;
+
+                complaint.classList.remove('open');
+                complaint.classList.add('closed');
+
+                const statusBadge = complaint.querySelector('.complaint-status');
+                if (statusBadge) {
+                    statusBadge.className = 'complaint-status status-closed';
+                    statusBadge.textContent = 'Закрыта';
+                }
+
+                const closeBtn = complaint.querySelector('.btn-close-complaint');
+                if (closeBtn) closeBtn.remove();
+
+                showNotification('Жалоба закрыта', 'success');
+            }
+        })
+        .catch(error => {
+            console.error('Ошибка:', error);
+            showNotification('Ошибка при закрытии жалобы', 'error');
+        });
 }
 
 function showDeleteModal(workId, workTitle) {
@@ -178,12 +219,12 @@ function hideDeleteModal() {
 
 async function confirmDelete() {
     const reason = document.getElementById('deleteReason').value.trim();
-    
+
     if (!reason) {
         alert('Укажите причину удаления');
         return;
     }
-    
+
     try {
         const response = await fetch(`/admin/works/${currentWorkId}/delete`, {
             method: 'POST',
@@ -193,22 +234,20 @@ async function confirmDelete() {
             },
             body: JSON.stringify({ reason })
         });
-        
+
         const data = await response.json();
-        
+
         if (data.success) {
-            // Удаляем все жалобы, связанные с этой работой
-            document.querySelectorAll(`.complaint-card`).forEach(card => {
+            document.querySelectorAll('.complaint-card').forEach(card => {
                 const workLink = card.querySelector('a[href*="/works/"]');
                 if (workLink && workLink.href.includes(`/works/${currentWorkId}`)) {
                     card.remove();
                 }
             });
-            
+
             hideDeleteModal();
             showNotification('Работа удалена', 'success');
-            
-            // Если не осталось жалоб, показываем empty state
+
             if (document.querySelectorAll('.complaint-card').length === 0) {
                 location.reload();
             }
@@ -221,29 +260,46 @@ async function confirmDelete() {
 
 function showNotification(message, type) {
     const notification = document.createElement('div');
-    notification.className = `notification notification-${type}`;
+    notification.className = `notification ${type}`;
     notification.innerHTML = `
         <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'}"></i>
         <span>${message}</span>
     `;
-    
+
     document.body.appendChild(notification);
-    
+
     setTimeout(() => {
         notification.classList.add('fade-out');
         setTimeout(() => notification.remove(), 300);
     }, 3000);
 }
 
-// Закрытие модального окна при клике вне его
-window.onclick = function(event) {
-    const modal = document.getElementById('deleteWorkModal');
-    if (event.target == modal) {
-        modal.style.display = 'none';
-    }
+const searchInput = document.getElementById('complaintSearch');
+if (searchInput) {
+    searchInput.addEventListener('input', (e) => {
+        const query = e.target.value.toLowerCase().trim();
+        const cards = document.querySelectorAll('.complaint-card');
+
+        cards.forEach(card => {
+            const text = [
+                card.dataset.title,
+                card.dataset.reporter,
+                card.dataset.owner,
+                card.dataset.reason
+            ].join(' ');
+
+            card.style.display = text.includes(query) ? '' : 'none';
+        });
+    });
 }
 
-// Клавиша Escape
+window.onclick = function(event) {
+    const modal = document.getElementById('deleteWorkModal');
+    if (event.target === modal) {
+        modal.style.display = 'none';
+    }
+};
+
 document.addEventListener('keydown', function(e) {
     if (e.key === 'Escape') {
         hideDeleteModal();
@@ -252,46 +308,140 @@ document.addEventListener('keydown', function(e) {
 </script>
 
 <style>
+.complaints-page .admin-content {
+    width: 100%;
+}
+
+.complaints-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 16px;
+    margin-bottom: 16px;
+}
+
+.header-subtitle {
+    margin-top: 6px;
+    color: var(--gray);
+}
+
+.complaints-summary {
+    display: flex;
+    gap: 10px;
+}
+
+.summary-item {
+    background: var(--white);
+    border: 1px solid var(--light-gray);
+    border-radius: 10px;
+    padding: 10px 14px;
+    min-width: 140px;
+}
+
+.summary-item.open { border-top: 3px solid var(--error); }
+.summary-item.total { border-top: 3px solid var(--primary); }
+
+.summary-label {
+    display: block;
+    font-size: 12px;
+    color: var(--gray);
+    margin-bottom: 3px;
+}
+
+.summary-value {
+    font-size: 20px;
+}
+
+.complaints-toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+}
+
+.filter-tabs {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.filter-tab {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 12px;
+    border-radius: 8px;
+    text-decoration: none;
+    color: var(--dark);
+    border: 1px solid var(--light-gray);
+    background: var(--white);
+}
+
+.filter-tab.active {
+    background: var(--primary);
+    color: var(--white);
+    border-color: var(--primary);
+}
+
+.search-box {
+    min-width: 290px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--white);
+    border: 1px solid var(--light-gray);
+    border-radius: 8px;
+    padding: 0 12px;
+}
+
+.search-box input {
+    border: none;
+    outline: none;
+    width: 100%;
+    padding: 10px 0;
+    background: transparent;
+}
+
 .complaints-list {
     display: flex;
     flex-direction: column;
-    gap: 20px;
+    gap: 16px;
 }
 
 .complaint-card {
     background: var(--white);
     border-radius: 10px;
     padding: 20px;
-    box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+    box-shadow: 0 3px 10px rgba(0,0,0,0.08);
     border-left: 4px solid;
 }
 
-.complaint-card.open {
-    border-left-color: var(--error);
-}
-
+.complaint-card.open { border-left-color: var(--error); }
 .complaint-card.closed {
     border-left-color: var(--success);
-    opacity: 0.7;
+    opacity: 0.75;
 }
 
 .complaint-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 15px;
-    padding-bottom: 15px;
+    margin-bottom: 14px;
+    padding-bottom: 14px;
     border-bottom: 1px solid var(--light-gray);
 }
 
 .complaint-meta {
     display: flex;
     align-items: center;
-    gap: 15px;
+    gap: 10px;
+    flex-wrap: wrap;
 }
 
 .complaint-id {
-    font-weight: 600;
+    font-weight: 700;
     color: var(--primary);
 }
 
@@ -300,93 +450,63 @@ document.addEventListener('keydown', function(e) {
     color: var(--gray);
 }
 
-.complaint-date i {
-    margin-right: 5px;
-}
-
 .complaint-status {
-    padding: 3px 8px;
-    border-radius: 3px;
+    padding: 4px 8px;
+    border-radius: 999px;
     font-size: 12px;
-    font-weight: 500;
+    font-weight: 600;
 }
 
-.status-open {
-    background: var(--error);
-    color: var(--white);
-}
-
-.status-closed {
-    background: var(--success);
-    color: var(--white);
-}
+.status-open { background: var(--error); color: var(--white); }
+.status-closed { background: var(--success); color: var(--white); }
 
 .btn-close-complaint {
     background: var(--success);
     color: var(--white);
     border: none;
-    padding: 5px 12px;
-    border-radius: 3px;
+    padding: 7px 12px;
+    border-radius: 6px;
     cursor: pointer;
     font-size: 13px;
-    display: flex;
-    align-items: center;
-    gap: 5px;
-    transition: background 0.3s;
-}
-
-.btn-close-complaint:hover {
-    background: #218838;
 }
 
 .complaint-content {
     display: grid;
-    grid-template-columns: 1fr 200px;
+    grid-template-columns: 1fr 210px;
     gap: 20px;
 }
 
-.complaint-info p {
-    margin-bottom: 8px;
-    line-height: 1.5;
-}
+.complaint-info p { margin-bottom: 8px; }
+.complaint-info a { color: var(--primary); text-decoration: none; }
+.complaint-info a:hover { text-decoration: underline; }
 
-.complaint-info a {
-    color: var(--primary);
-    text-decoration: none;
-}
-
-.complaint-info a:hover {
-    text-decoration: underline;
-}
-
-.complaint-work-preview {
-    text-align: center;
+.complaint-reason {
+    background: #fafafa;
+    border: 1px solid var(--light-gray);
+    border-radius: 8px;
+    padding: 10px;
 }
 
 .complaint-work-preview img {
     width: 100%;
     max-height: 150px;
     object-fit: cover;
-    border-radius: 5px;
+    border-radius: 8px;
     margin-bottom: 10px;
 }
 
 .complaint-actions {
     display: flex;
-    gap: 10px;
+    gap: 8px;
     justify-content: center;
 }
 
-/* Модальное окно */
 .modal {
     display: none;
     position: fixed;
-    z-index: 1000;
-    left: 0;
-    top: 0;
-    width: 100%;
-    height: 100%;
+    inset: 0;
     background: rgba(0,0,0,0.5);
+    z-index: 1000;
 }
 
 .modal-content {
@@ -407,10 +527,6 @@ document.addEventListener('keydown', function(e) {
     color: var(--gray);
 }
 
-.close:hover {
-    color: var(--dark);
-}
-
 .modal-actions {
     display: flex;
     gap: 10px;
@@ -427,7 +543,6 @@ document.addEventListener('keydown', function(e) {
     resize: vertical;
 }
 
-/* Уведомления */
 .notification {
     position: fixed;
     top: 20px;
@@ -435,7 +550,7 @@ document.addEventListener('keydown', function(e) {
     background: var(--white);
     color: var(--dark);
     padding: 15px 25px;
-    border-radius: 5px;
+    border-radius: 8px;
     box-shadow: 0 5px 20px rgba(0,0,0,0.2);
     display: flex;
     align-items: center;
@@ -444,49 +559,36 @@ document.addEventListener('keydown', function(e) {
     animation: slideIn 0.3s;
 }
 
-.notification.success {
-    border-left: 4px solid var(--success);
-}
+.notification.success { border-left: 4px solid var(--success); }
+.notification.error { border-left: 4px solid var(--error); }
 
-.notification.error {
-    border-left: 4px solid var(--error);
-}
+.fade-out { animation: fadeOut 0.3s forwards; }
 
 @keyframes slideIn {
-    from {
-        transform: translateX(100%);
-        opacity: 0;
-    }
-    to {
-        transform: translateX(0);
-        opacity: 1;
-    }
-}
-
-.fade-out {
-    animation: fadeOut 0.3s forwards;
+    from { transform: translateX(100%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
 }
 
 @keyframes fadeOut {
-    to {
-        opacity: 0;
-        transform: translateX(100%);
-    }
+    to { opacity: 0; transform: translateX(100%); }
+}
+
+@media (max-width: 900px) {
+    .complaint-content { grid-template-columns: 1fr; }
+    .complaints-header { flex-direction: column; }
+    .complaints-summary { width: 100%; }
 }
 
 @media (max-width: 768px) {
-    .complaint-content {
-        grid-template-columns: 1fr;
-    }
-    
     .complaint-header {
         flex-direction: column;
         align-items: flex-start;
         gap: 10px;
     }
-    
-    .complaint-meta {
-        flex-wrap: wrap;
+
+    .search-box {
+        width: 100%;
+        min-width: 0;
     }
 }
 </style>
