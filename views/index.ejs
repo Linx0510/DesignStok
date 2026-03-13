@@ -35,14 +35,12 @@
 
                     <% if (currentUser && currentUser.id !== work.user_id) { %>
                         <div class="work-card-actions">
-                            <button
-                                type="button"
-                                class="report-link"
-                                onclick="openReportModal('<%= work.id %>', '<%= (work.title || '').replace(/'/g, "\\'") %>')"
-                            >
-                                <i class="fas fa-flag"></i>
-                                Пожаловаться
-                            </button>
+                            <button 
+                                data-id="<%= work.id %>" 
+                                data-title="<%= (work.title || '').replace(/"/g, '&quot;') %>"
+                                onclick="openReportModal(this.dataset.id, this.dataset.title)">
+                                    Открыть отчет
+                                </button>
                         </div>
                     <% } else if (!currentUser) { %>
                         <div class="work-card-actions">

@@ -230,11 +230,11 @@ exports.getComplaints = async (req, res) => {
         const limit = 20;
         const offset = (page - 1) * limit;
         
-        let whereClause = '';
+        let countWhereClause = '';
         if (filter === 'open') {
-            whereClause = "WHERE c.status = 'open'";
+            countWhereClause = "WHERE status = 'open'";
         } else if (filter === 'closed') {
-            whereClause = "WHERE c.status = 'closed'";
+            countWhereClause = "WHERE status = 'closed'";
         }
         
         const complaints = await db.query(`
@@ -256,7 +256,7 @@ exports.getComplaints = async (req, res) => {
         
         // Получаем общее количество
         const countResult = await db.query(`
-            SELECT COUNT(*) FROM complaints ${whereClause}
+           SELECT COUNT(*) FROM complaints ${countWhereClause}
         `);
         const totalCount = parseInt(countResult.rows[0].count);
         const totalPages = Math.ceil(totalCount / limit);
