@@ -12,5 +12,8 @@ router.post('/works/:id/reject', adminController.rejectWork);
 router.get('/complaints', adminController.getComplaints);
 router.post('/complaints/:id/close', adminController.closeComplaint);
 router.post('/works/:id/delete', adminController.deleteWork);
+router.get('/users', adminController.getUsers);
+router.post('/users/:id/role', adminController.updateUserRole);
+router.delete('/users/:id', adminController.deleteUser);
 
 module.exports = router;
