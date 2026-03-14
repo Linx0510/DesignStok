@@ -23,10 +23,12 @@ exports.getProfile = async (req, res) => {
         
         try {
             const worksQuery = `
-                SELECT w.*, array_agg(DISTINCT t.name) as tags
+                SELECT w.*, array_agg(DISTINCT t.name) as tags,
+                       COUNT(DISTINCT f.user_id) as favorites_count
                 FROM works w
                 LEFT JOIN work_tags wt ON w.id = wt.work_id
                 LEFT JOIN tags t ON wt.tag_id = t.id
+                LEFT JOIN favorites f ON w.id = f.work_id
                 WHERE w.user_id = $1 AND w.status = 'approved'
                 GROUP BY w.id
                 ORDER BY w.created_at DESC
@@ -113,6 +115,59 @@ exports.updateProfile = async (req, res) => {
     }
 };
 
+
+exports.changePassword = async (req, res) => {
+    try {
+        const currentPassword = req.body.currentPassword || '';
+        const newPassword = req.body.newPassword || '';
+        const confirmPassword = req.body.confirmPassword || '';
+
+        if (!currentPassword || !newPassword || !confirmPassword) {
+            req.flash('error', 'Заполните все поля для смены пароля');
+            return res.redirect('/profile?edit=1');
+        }
+
+        if (newPassword.length < 6) {
+            req.flash('error', 'Новый пароль должен содержать минимум 6 символов');
+            return res.redirect('/profile?edit=1');
+        }
+
+        if (newPassword !== confirmPassword) {
+            req.flash('error', 'Новый пароль и подтверждение не совпадают');
+            return res.redirect('/profile?edit=1');
+        }
+
+        const user = await User.findById(req.session.userId);
+
+        if (!user) {
+            req.flash('error', 'Пользователь не найден');
+            return res.redirect('/profile?edit=1');
+        }
+
+        const isValidCurrentPassword = await User.comparePassword(currentPassword, user.password_hash);
+
+        if (!isValidCurrentPassword) {
+            req.flash('error', 'Текущий пароль введён неверно');
+            return res.redirect('/profile?edit=1');
+        }
+
+        const isSamePassword = await User.comparePassword(newPassword, user.password_hash);
+
+        if (isSamePassword) {
+            req.flash('error', 'Новый пароль должен отличаться от текущего');
+            return res.redirect('/profile?edit=1');
+        }
+
+        await User.updatePassword(req.session.userId, newPassword);
+
+        req.flash('success', 'Пароль успешно изменён');
+        return res.redirect('/profile');
+    } catch (error) {
+        console.error('Ошибка смены пароля:', error);
+        req.flash('error', 'Не удалось изменить пароль');
+        return res.redirect('/profile?edit=1');
+    }
+};
 exports.markAllNotificationsRead = async (req, res) => {
     try {
         await Notification.markAllAsRead(req.session.userId);
