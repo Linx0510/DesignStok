@@ -12,5 +12,6 @@ router.get('/:id', workController.getWork);
 router.post('/:id/favorite', isAuthenticated, workController.addToFavorites);
 router.delete('/:id/favorite', isAuthenticated, workController.removeFromFavorites);
 router.post('/:id/report', isAuthenticated, workController.reportWork);
+router.delete('/:id', isAuthenticated, workController.deleteOwnWork);
 
 module.exports = router;

@@ -20,6 +20,13 @@
                         <i class="fas fa-flag"></i>
                         <span class="action-text">Пожаловаться</span>
                     </button>
+
+                    <% if (currentUser.id === work.user_id) { %>
+                        <button class="btn-action" onclick="deleteOwnWork(<%= work.id %>)">
+                            <i class="fas fa-trash"></i>
+                            <span class="action-text">Удалить работу</span>
+                        </button>
+                    <% } %>
                 </div>
             <% } %>
         </div>
@@ -158,6 +165,33 @@ async function toggleFavorite(workId) {
     } catch (error) {
         console.error('Ошибка:', error);
         showNotification('Произошла ошибка', 'error');
+    }
+}
+
+
+async function deleteOwnWork(workId) {
+    const isConfirmed = window.confirm('Удалить работу? Это действие нельзя отменить.');
+    if (!isConfirmed) {
+        return;
+    }
+
+    try {
+        const response = await fetch(`/works/${workId}`, {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+
+        const result = await response.json();
+        if (!response.ok || !result.success) {
+            throw new Error(result.error || 'Не удалось удалить работу');
+        }
+
+        window.location.href = '/profile';
+    } catch (error) {
+        console.error('Ошибка:', error);
+        showNotification(error.message || 'Ошибка при удалении работы', 'error');
     }
 }
 

@@ -220,3 +220,34 @@ exports.reportWork = async (req, res) => {
         res.redirect('back');
     }
 };
+
+exports.deleteOwnWork = async (req, res) => {
+    try {
+        const workId = parseInt(req.params.id, 10);
+
+        if (Number.isNaN(workId)) {
+            return res.status(400).json({ success: false, error: 'Некорректный идентификатор работы' });
+        }
+
+        const workResult = await db.query(
+            'SELECT id, user_id FROM works WHERE id = $1 LIMIT 1',
+            [workId]
+        );
+
+        if (workResult.rows.length === 0) {
+            return res.status(404).json({ success: false, error: 'Работа не найдена' });
+        }
+
+        const work = workResult.rows[0];
+        if (work.user_id !== req.session.userId) {
+            return res.status(403).json({ success: false, error: 'Можно удалить только свою работу' });
+        }
+
+        await Work.delete(workId);
+
+        return res.json({ success: true });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({ success: false, error: 'Ошибка при удалении работы' });
+    }
+};
