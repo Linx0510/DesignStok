@@ -81,6 +81,16 @@ class User {
     static async comparePassword(password, hash) {
         return bcrypt.compare(password, hash);
     }
+
+    static async updatePassword(userId, newPassword) {
+        const passwordHash = await bcrypt.hash(newPassword, 10);
+        const result = await db.query(
+            'UPDATE users SET password_hash = $1 WHERE id = $2 RETURNING id',
+            [passwordHash, userId]
+        );
+
+        return result.rows[0];
+    }
 }
 
 module.exports = User;
