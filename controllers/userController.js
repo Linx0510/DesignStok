@@ -64,12 +64,16 @@ exports.getProfile = async (req, res) => {
         }
         
 
+        const isOwnProfile = userId === req.session.userId;
+        const isEditing = isOwnProfile && req.query.edit === '1';
+
         res.render('profile', {
             title: `Профиль ${user.username}`,
             works,
             favorites,
             notifications,
-            isOwnProfile: userId === req.session.userId,
+            isOwnProfile,
+            isEditing,
             user
         });
     } catch (error) {
@@ -80,21 +84,32 @@ exports.getProfile = async (req, res) => {
 
 exports.updateProfile = async (req, res) => {
     try {
-        const { username, bio } = req.body;
+        const username = (req.body.username || '').trim();
+        const bio = typeof req.body.bio === 'string' ? req.body.bio.trim() : '';
         let avatar_path = null;
-        
+
+        if (!username) {
+            req.flash('error', 'Имя пользователя не может быть пустым');
+            return res.redirect('/profile?edit=1');
+        }
+
         if (req.file) {
             avatar_path = '/uploads/' + req.file.filename;
         }
-        
+
         await User.updateProfile(req.session.userId, { username, bio, avatar_path });
-        
-        req.flash('success', 'Профиль обновлен');
+
+        req.flash('success', 'Профиль обновлён');
         res.redirect('/profile');
     } catch (error) {
         console.error(error);
+        if (error && error.code === '23505') {
+            req.flash('error', 'Пользователь с таким именем уже существует');
+            return res.redirect('/profile?edit=1');
+        }
+
         req.flash('error', 'Ошибка при обновлении профиля');
-        res.redirect('/profile');
+        res.redirect('/profile?edit=1');
     }
 };
 

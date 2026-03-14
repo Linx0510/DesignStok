@@ -17,6 +17,33 @@
     </div>
 
     <div class="profile-content">
+        <% if (isOwnProfile && isEditing) { %>
+            <section class="profile-edit-section">
+                <h3>Редактирование профиля</h3>
+                <form action="/profile/update" method="POST" enctype="multipart/form-data" class="profile-edit-form">
+                    <div class="form-group">
+                        <label for="username">Имя пользователя</label>
+                        <input type="text" id="username" name="username" value="<%= user.username %>" minlength="2" maxlength="50" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="bio">О себе</label>
+                        <textarea id="bio" name="bio" rows="4" maxlength="500" placeholder="Расскажите немного о себе"><%= user.bio || '' %></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="avatar">Аватар</label>
+                        <input type="file" id="avatar" name="avatar" accept="image/png,image/jpeg,image/jpg,image/webp,image/gif">
+                    </div>
+
+                    <div class="profile-edit-actions">
+                        <button type="submit" class="btn btn-primary">Сохранить</button>
+                        <a href="/profile" class="btn btn-outline">Отмена</a>
+                    </div>
+                </form>
+            </section>
+        <% } %>
+
         <div class="profile-stats">
             <div class="stat-item">
                 <span class="stat-value">0</span>
@@ -80,9 +107,13 @@
             </div>
         <% } %>
 
-        <% if (currentUser && currentUser.id === user.id) { %>
+        <% if (isOwnProfile) { %>
             <div class="profile-actions">
-                <a href="/profile" class="btn">Редактировать профиль</a>
+                <% if (isEditing) { %>
+                    <a href="/profile" class="btn">Вернуться в профиль</a>
+                <% } else { %>
+                    <a href="/profile?edit=1" class="btn">Редактировать профиль</a>
+                <% } %>
                 <a href="/works/upload" class="btn">Добавить работу</a>
                 <a href="/auth/logout" class="btn btn-danger">Выйти</a>
             </div>
