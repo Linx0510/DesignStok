@@ -11,6 +11,26 @@ exports.getUpload = (req, res) => {
     });
 };
 
+exports.getWorks = async (req, res) => {
+    try {
+        const page = parseInt(req.query.page, 10) || 1;
+        const limit = 20;
+        const offset = (page - 1) * limit;
+
+        const works = await Work.findAll('approved', limit, offset);
+
+        res.render('index', {
+            title: 'Работы',
+            works,
+            query: null,
+            user: req.session.userId ? await User.findById(req.session.userId) : null
+        });
+    } catch (error) {
+        console.error(error);
+        res.status(500).render('500', { title: 'Ошибка сервера' });
+    }
+};
+
 exports.postUpload = async (req, res) => {
     try {
         if (!req.file) {
