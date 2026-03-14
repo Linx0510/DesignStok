@@ -73,11 +73,17 @@ exports.getWork = async (req, res) => {
             isFavorited = favResult.rows.length > 0;
         }
         
-        res.render('work', {
+        const currentUser = req.session.userId
+            ? await User.findById(req.session.userId)
+            : null;
+
+        res.render('works', {
             title: work.title,
             work,
             isFavorited,
-            user: req.session.userId ? await User.findById(req.session.userId) : null
+            user: currentUser,
+            currentUser,
+            similarWorks: []
         });
     } catch (error) {
         console.error(error);
