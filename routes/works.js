@@ -7,7 +7,7 @@ const upload = require('../middleware/upload');
 router.get('/upload', isAuthenticated, workController.getUpload);
 router.post('/upload', isAuthenticated, upload.single('image'), workController.postUpload);
 router.get('/search', workController.searchWorks);
-router.get('/', (req, res) => res.redirect('/'));
+router.get('/', workController.getWorks);
 router.get('/:id', workController.getWork);
 router.post('/:id/favorite', isAuthenticated, workController.addToFavorites);
 router.delete('/:id/favorite', isAuthenticated, workController.removeFromFavorites);
