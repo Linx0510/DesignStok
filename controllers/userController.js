@@ -24,16 +24,18 @@ exports.getProfile = async (req, res) => {
         try {
             const worksQuery = `
                 SELECT w.*, array_agg(DISTINCT t.name) as tags,
-                       COUNT(DISTINCT f.user_id) as favorites_count
+                       COUNT(DISTINCT f.user_id) as favorites_count,
+                       BOOL_OR(fm.user_id IS NOT NULL) as is_favorited
                 FROM works w
                 LEFT JOIN work_tags wt ON w.id = wt.work_id
                 LEFT JOIN tags t ON wt.tag_id = t.id
                 LEFT JOIN favorites f ON w.id = f.work_id
+                LEFT JOIN favorites fm ON w.id = fm.work_id AND fm.user_id = $2
                 WHERE w.user_id = $1 AND w.status = 'approved'
                 GROUP BY w.id
                 ORDER BY w.created_at DESC
             `;
-            const worksResult = await db.query(worksQuery, [userId]);
+            const worksResult = await db.query(worksQuery, [userId, req.session.userId || null]);
             works = worksResult.rows;
         } catch (error) {
             console.error('Ошибка загрузки работ профиля:', error.message);
@@ -42,17 +44,19 @@ exports.getProfile = async (req, res) => {
         try {
             const favoritesQuery = `
                 SELECT w.*, array_agg(DISTINCT t.name) as tags,
-                       COUNT(DISTINCT f2.user_id) as favorites_count
+                       COUNT(DISTINCT f2.user_id) as favorites_count,
+                       BOOL_OR(fm.user_id IS NOT NULL) as is_favorited
                 FROM favorites f
                 JOIN works w ON f.work_id = w.id
                 LEFT JOIN work_tags wt ON w.id = wt.work_id
                 LEFT JOIN tags t ON wt.tag_id = t.id
                 LEFT JOIN favorites f2 ON w.id = f2.work_id
+                LEFT JOIN favorites fm ON w.id = fm.work_id AND fm.user_id = $2
                 WHERE f.user_id = $1 AND w.status = 'approved'
                 GROUP BY w.id
                 ORDER BY f.created_at DESC
             `;
-            const favoritesResult = await db.query(favoritesQuery, [userId]);
+            const favoritesResult = await db.query(favoritesQuery, [userId, req.session.userId || null]);
             favorites = favoritesResult.rows;
         } catch (error) {
             console.error('Ошибка загрузки избранного профиля:', error.message);
