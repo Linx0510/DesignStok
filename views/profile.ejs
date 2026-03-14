@@ -119,6 +119,20 @@
                                     <% } %>
                                 </div>
                             </a>
+
+                            <% if (currentUser) { %>
+                                <div class="work-card-actions">
+                                    <button
+                                        type="button"
+                                        class="favorite-toggle-btn <%= work.is_favorited ? 'favorited' : '' %>"
+                                        data-work-id="<%= work.id %>"
+                                        data-favorited="<%= work.is_favorited %>"
+                                        onclick="toggleFavoriteFromCard(this)">
+                                        <i class="<%= work.is_favorited ? 'fas' : 'far' %> fa-heart"></i>
+                                        <span><%= work.is_favorited ? 'В избранном' : 'В избранное' %></span>
+                                    </button>
+                                </div>
+                            <% } %>
                         </div>
                     <% }) %>
                 </div>
@@ -152,6 +166,20 @@
                                     <% } %>
                                 </div>
                             </a>
+
+                            <% if (currentUser) { %>
+                                <div class="work-card-actions">
+                                    <button
+                                        type="button"
+                                        class="favorite-toggle-btn <%= work.is_favorited ? 'favorited' : '' %>"
+                                        data-work-id="<%= work.id %>"
+                                        data-favorited="<%= work.is_favorited %>"
+                                        onclick="toggleFavoriteFromCard(this)">
+                                        <i class="<%= work.is_favorited ? 'fas' : 'far' %> fa-heart"></i>
+                                        <span><%= work.is_favorited ? 'В избранном' : 'В избранное' %></span>
+                                    </button>
+                                </div>
+                            <% } %>
                         </div>
                     <% }) %>
                 </div>
@@ -209,6 +237,40 @@
 
 
 <script>
+async function toggleFavoriteFromCard(button) {
+    const workId = button.dataset.workId;
+    const isFavorited = button.dataset.favorited === 'true';
+
+    try {
+        const response = await fetch(`/works/${workId}/favorite`, {
+            method: isFavorited ? 'DELETE' : 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+
+        const result = await response.json();
+        if (!response.ok || !result.success) {
+            throw new Error('Не удалось обновить избранное');
+        }
+
+        button.dataset.favorited = (!isFavorited).toString();
+        button.classList.toggle('favorited', !isFavorited);
+
+        const icon = button.querySelector('i');
+        const text = button.querySelector('span');
+        icon.className = !isFavorited ? 'fas fa-heart' : 'far fa-heart';
+        text.textContent = !isFavorited ? 'В избранном' : 'В избранное';
+
+        if (window.location.pathname.startsWith('/profile')) {
+            window.location.reload();
+        }
+    } catch (error) {
+        console.error('Ошибка при обновлении избранного:', error);
+        alert('Не удалось обновить избранное');
+    }
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     const notificationsList = document.getElementById('notificationsList');
     const markAllButton = document.getElementById('markAllNotificationsRead');
