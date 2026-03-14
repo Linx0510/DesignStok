@@ -33,6 +33,20 @@
                         </div>
                     </a>
 
+                    <% if (currentUser) { %>
+                        <div class="work-card-actions">
+                            <button
+                                type="button"
+                                class="favorite-toggle-btn <%= work.is_favorited ? 'favorited' : '' %>"
+                                data-work-id="<%= work.id %>"
+                                data-favorited="<%= work.is_favorited %>"
+                                onclick="toggleFavoriteFromCard(this)">
+                                <i class="<%= work.is_favorited ? 'fas' : 'far' %> fa-heart"></i>
+                                <span><%= work.is_favorited ? 'В избранном' : 'В избранное' %></span>
+                            </button>
+                        </div>
+                    <% } %>
+
                     <% if (currentUser && currentUser.id !== work.user_id) { %>
                         <div class="work-card-actions">
                             <button 
@@ -116,6 +130,35 @@ document.addEventListener('keydown', (event) => {
         closeReportModal();
     }
 });
+
+async function toggleFavoriteFromCard(button) {
+    const { workId } = button.dataset;
+    const isFavorited = button.dataset.favorited === 'true';
+
+    try {
+        const response = await fetch(`/works/${workId}/favorite`, {
+            method: isFavorited ? 'DELETE' : 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+
+        if (!response.ok) {
+            throw new Error('Не удалось обновить избранное');
+        }
+
+        button.dataset.favorited = (!isFavorited).toString();
+        button.classList.toggle('favorited', !isFavorited);
+
+        const icon = button.querySelector('i');
+        const text = button.querySelector('span');
+
+        icon.className = !isFavorited ? 'fas fa-heart' : 'far fa-heart';
+        text.textContent = !isFavorited ? 'В избранном' : 'В избранное';
+    } catch (error) {
+        console.error('Ошибка при обновлении избранного:', error);
+    }
+}
 </script>
 
 <%- include('partials/footer') %>

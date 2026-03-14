@@ -18,12 +18,29 @@ exports.getWorks = async (req, res) => {
         const offset = (page - 1) * limit;
 
         const works = await Work.findAll('approved', limit, offset);
+        const currentUser = req.session.userId ? await User.findById(req.session.userId) : null;
+
+        if (currentUser && works.length > 0) {
+            const favoriteResult = await db.query(
+                'SELECT work_id FROM favorites WHERE user_id = $1 AND work_id = ANY($2::int[])',
+                [currentUser.id, works.map((work) => work.id)]
+            );
+            const favoriteIds = new Set(favoriteResult.rows.map((row) => row.work_id));
+            works.forEach((work) => {
+                work.is_favorited = favoriteIds.has(work.id);
+            });
+        } else {
+            works.forEach((work) => {
+                work.is_favorited = false;
+            });
+        }
 
         res.render('index', {
             title: 'Работы',
             works,
             query: null,
-            user: req.session.userId ? await User.findById(req.session.userId) : null
+            user: currentUser,
+            currentUser
         });
     } catch (error) {
         console.error(error);
@@ -104,12 +121,30 @@ exports.searchWorks = async (req, res) => {
         } else {
             works = await Work.findAll('approved', limit, offset);
         }
+
+        const currentUser = req.session.userId ? await User.findById(req.session.userId) : null;
+
+        if (currentUser && works.length > 0) {
+            const favoriteResult = await db.query(
+                'SELECT work_id FROM favorites WHERE user_id = $1 AND work_id = ANY($2::int[])',
+                [currentUser.id, works.map((work) => work.id)]
+            );
+            const favoriteIds = new Set(favoriteResult.rows.map((row) => row.work_id));
+            works.forEach((work) => {
+                work.is_favorited = favoriteIds.has(work.id);
+            });
+        } else {
+            works.forEach((work) => {
+                work.is_favorited = false;
+            });
+        }
         
         res.render('index', {
             title: q ? `Поиск: ${q}` : 'Главная',
             works,
             query: q,
-            user: req.session.userId ? await User.findById(req.session.userId) : null
+            user: currentUser,
+            currentUser
         });
     } catch (error) {
         console.error(error);
@@ -119,7 +154,16 @@ exports.searchWorks = async (req, res) => {
 
 exports.addToFavorites = async (req, res) => {
     try {
-        const { workId } = req.body;
+        const workId = req.params.id || req.body.workId;
+
+        if (!workId) {
+            return res.status(400).json({ success: false, error: 'Не указан идентификатор работы' });
+        }
+
+        const work = await Work.findById(workId);
+        if (!work) {
+            return res.status(404).json({ success: false, error: 'Работа не найдена' });
+        }
         
         // Проверяем, не добавлена ли уже работа
         const checkQuery = 'SELECT * FROM favorites WHERE user_id = $1 AND work_id = $2';
@@ -141,7 +185,11 @@ exports.addToFavorites = async (req, res) => {
 
 exports.removeFromFavorites = async (req, res) => {
     try {
-        const { workId } = req.body;
+        const workId = req.params.id || req.body.workId;
+
+        if (!workId) {
+            return res.status(400).json({ success: false, error: 'Не указан идентификатор работы' });
+        }
         
         await db.query(
             'DELETE FROM favorites WHERE user_id = $1 AND work_id = $2',
