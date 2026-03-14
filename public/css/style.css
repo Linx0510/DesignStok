@@ -386,3 +386,17 @@ th {
     .complaints-page,
     .alert { width: calc(100% - 1rem); }
 }
+
+.profile-edit-section {
+    margin-bottom: 1rem;
+}
+
+.profile-edit-section h3 {
+    margin-bottom: .75rem;
+}
+
+.profile-edit-actions {
+    display: flex;
+    align-items: center;
+    gap: .6rem;
+}
