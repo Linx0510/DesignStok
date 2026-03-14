@@ -41,11 +41,13 @@ exports.getProfile = async (req, res) => {
 
         try {
             const favoritesQuery = `
-                SELECT w.*, array_agg(DISTINCT t.name) as tags
+                SELECT w.*, array_agg(DISTINCT t.name) as tags,
+                       COUNT(DISTINCT f2.user_id) as favorites_count
                 FROM favorites f
                 JOIN works w ON f.work_id = w.id
                 LEFT JOIN work_tags wt ON w.id = wt.work_id
                 LEFT JOIN tags t ON wt.tag_id = t.id
+                LEFT JOIN favorites f2 ON w.id = f2.work_id
                 WHERE f.user_id = $1 AND w.status = 'approved'
                 GROUP BY w.id
                 ORDER BY f.created_at DESC
