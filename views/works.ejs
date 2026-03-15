@@ -22,7 +22,7 @@
                     </button>
 
                     <% if (currentUser.id === work.user_id) { %>
-                        <button class="btn-action" onclick="deleteOwnWork(<%= work.id %>)">
+                        <button class="btn-action" onclick="deleteOwnWork(`<%= work.id %>`)">
                             <i class="fas fa-trash"></i>
                             <span class="action-text">Удалить работу</span>
                         </button>
@@ -35,8 +35,8 @@
             <h1><%= work.title %></h1>
             
             <div class="work-stats">
-                <span><i class="fas fa-eye"></i> <%= work.views_count || 0 %> просмотров</span>
-                <span><i class="fas fa-heart"></i> <span id="favoritesCount"><%= work.favorites_count || 0 %></span> в избранном</span>
+                <span><i class="fas fa-eye"></i> <%= work.views_count || 0 %></span>
+                <span><i class="fas fa-heart"></i> <span id="favoritesCount"><%= work.favorites_count || 0 %></span></span>
                 <span><i class="fas fa-calendar"></i> <%= new Date(work.created_at).toLocaleDateString('ru-RU') %></span>
             </div>
             
@@ -69,7 +69,7 @@
                     <h3>Теги</h3>
                     <div class="work-tags">
                         <% work.tags.forEach(tag => { %>
-                            <a href="/works/search?q=<%= tag %>" class="tag">#<%= tag %></a>
+                            <a style="text-decoration: none;" href="/works/search?q=<%= tag %>" class="tag"  >#<%= tag %></a>
                         <% }) %>
                     </div>
                 </div>

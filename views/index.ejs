@@ -5,23 +5,45 @@
         <% if (works && works.length > 0) { %>
             <% works.forEach(work => { %>
                 <div class="work-card">
-                    <a href="/works/<%= work.id %>" class="work-link">
+                    <a style="text-decoration: none;" href="/works/<%= work.id %>" class="work-link">
                         <div class="work-image">
                             <img src="<%= work.image_path %>" alt="<%= work.title %>">
                             <div class="work-overlay">
                                 <span class="work-views">
                                     <i class="fas fa-eye"></i> <%= work.views_count || 0 %>
                                 </span>
-                                <span class="work-favorites">
-                                    <i class="fas fa-heart"></i> <%= work.favorites_count || 0 %>
-                                </span>
                             </div>
                         </div>
                         <div class="work-info">
-                            <h3 class="work-title"><%= work.title %></h3>
-                            <div class="work-author">
-                                <img src="<%= work.avatar_path || '/images/default-avatar.png' %>" alt="<%= work.username %>" class="avatar-mini">
-                                <span><%= work.username %></span>
+                            <div class="work-header">
+                               <h3 class="work-title"><%= work.title %></h3> 
+                               <% if (currentUser && currentUser.id !== work.user_id) { %>
+                                    <div class="work-card-actions">
+                                        <button style="border: none;
+                                        background-color: inherit;" title="Подать жалобу"
+                                            data-id="<%= work.id %>" 
+                                            data-title="<%= (work.title || '').replace(/"/g, '&quot;') %>"
+                                            onclick="openReportModal(this.dataset.id, this.dataset.title)">
+                                                <svg  width="30" height="30" viewBox="0 0 30 30" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                    <path d="M15 27.5C18.4517 27.5 21.5768 26.1009 23.8388 23.8388C26.1009 21.5768 27.5 18.4517 27.5 15C27.5 11.5483 26.1009 8.42325 23.8388 6.16116C21.5768 3.89911 18.4517 2.5 15 2.5C11.5483 2.5 8.42325 3.89911 6.16116 6.16116C3.89911 8.42325 2.5 11.5483 2.5 15C2.5 18.4517 3.89911 21.5768 6.16116 23.8388C8.42325 26.1009 11.5483 27.5 15 27.5Z" fill="#5A0017"/>
+                                                    <path fill-rule="evenodd" clip-rule="evenodd" d="M15 6.875C15.8629 6.875 16.5625 7.57456 16.5625 8.4375C16.5625 9.30044 15.8629 10 15 10C14.1371 10 13.4375 9.30044 13.4375 8.4375C13.4375 7.57456 14.1371 6.875 15 6.875Z" fill="#F3F7F6"/>
+                                                    <path d="M15.3125 21.25V12.5H14.6875H14.0625" stroke="#F3F7F6" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                                    <path d="M13.125 21.25H17.5" stroke="#F3F7F6" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                                </svg>
+                                        </button>
+                                    </div>
+                                <% } else if (!currentUser) { %>
+                                    <div class="work-card-actions">
+                                        <a href="/auth/login" class="report-link report-link-login">
+                                           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                <path d="M12 22C14.7614 22 17.2614 20.8807 19.0711 19.0711C20.8807 17.2614 22 14.7614 22 12C22 9.2386 20.8807 6.7386 19.0711 4.92893C17.2614 3.11929 14.7614 2 12 2C9.2386 2 6.7386 3.11929 4.92893 4.92893C3.11929 6.7386 2 9.2386 2 12C2 14.7614 3.11929 17.2614 4.92893 19.0711C6.7386 20.8807 9.2386 22 12 22Z" fill="#938F96" fill-opacity="0.5"/>
+                                                <path fill-rule="evenodd" clip-rule="evenodd" d="M12 5.5C12.6903 5.5 13.25 6.05965 13.25 6.75C13.25 7.44035 12.6903 8 12 8C11.3097 8 10.75 7.44035 10.75 6.75C10.75 6.05965 11.3097 5.5 12 5.5Z" fill="#F3F7F6"/>
+                                                <path d="M12.25 17V10H11.75H11.25" stroke="#F3F7F6" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                                <path d="M10.5 17H14" stroke="#F3F7F6" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                            </svg>
+                                        </a>
+                                    </div>
+                                <% } %>
                             </div>
                             <% if (work.tags && work.tags[0]) { %>
                                 <div class="work-tags">
@@ -32,38 +54,6 @@
                             <% } %>
                         </div>
                     </a>
-
-                    <% if (currentUser) { %>
-                        <div class="work-card-actions">
-                            <button
-                                type="button"
-                                class="favorite-toggle-btn <%= work.is_favorited ? 'favorited' : '' %>"
-                                data-work-id="<%= work.id %>"
-                                data-favorited="<%= work.is_favorited %>"
-                                onclick="toggleFavoriteFromCard(this)">
-                                <i class="<%= work.is_favorited ? 'fas' : 'far' %> fa-heart"></i>
-                                <span><%= work.is_favorited ? 'В избранном' : 'В избранное' %></span>
-                            </button>
-                        </div>
-                    <% } %>
-
-                    <% if (currentUser && currentUser.id !== work.user_id) { %>
-                        <div class="work-card-actions">
-                            <button 
-                                data-id="<%= work.id %>" 
-                                data-title="<%= (work.title || '').replace(/"/g, '&quot;') %>"
-                                onclick="openReportModal(this.dataset.id, this.dataset.title)">
-                                    Открыть отчет
-                                </button>
-                        </div>
-                    <% } else if (!currentUser) { %>
-                        <div class="work-card-actions">
-                            <a href="/login" class="report-link report-link-login">
-                                <i class="fas fa-flag"></i>
-                                Войти, чтобы пожаловаться
-                            </a>
-                        </div>
-                    <% } %>
                 </div>
             <% }) %>
         <% } else { %>

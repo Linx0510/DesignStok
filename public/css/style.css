@@ -229,6 +229,7 @@ body {
     font-weight: 500;
     border: 1px solid var(--primary-light);
     transition: var(--transition);
+    width: max-content;
 }
 
 .tag:hover {
@@ -479,11 +480,12 @@ body {
 
 .profile-header {
     background: linear-gradient(135deg, var(--primary-burgundy), var(--primary-dark));
-    border-radius: 20px 20px 20px 20px;
+    border-radius: 20px;
     padding: 3rem;
     margin-bottom: 2rem;
     color: white;
     box-shadow: var(--shadow-lg);
+    width: 300px;
 }
 
 .profile-cover {
@@ -632,6 +634,7 @@ body {
     box-shadow: var(--shadow-sm);
     transition: var(--transition);
     border: 1px solid var(--border-color);
+    height: min-content;
 }
 
 .work-card:hover {
@@ -642,15 +645,15 @@ body {
 
 .work-image {
     position: relative;
-    aspect-ratio: 1;
     overflow: hidden;
 }
 
 .work-image img {
     width: 100%;
-    height: 100%;
-    object-fit: cover;
+    height: auto;
+    object-fit: fill;
     transition: var(--transition);
+    background-position: 0;
 }
 
 .work-card:hover .work-image img {
@@ -677,17 +680,15 @@ body {
 
 .work-info {
     padding: 1.5rem;
+    gap: 1rem;
+    display: flex;
+    flex-direction: column;
 }
 
 .work-title {
     color: var(--primary-dark);
-    font-size: 1.1rem;
-    margin-bottom: 0.5rem;
-    font-weight: 600;
-}
-
-.work-card-actions {
-    padding: 0 1.5rem 1.5rem;
+    font-size: 1.5rem;
+    font-weight: 700;
 }
 
 /* Уведомления в профиле */
@@ -1162,7 +1163,6 @@ body {
 .work-detail {
     display: grid;
     grid-template-columns: 1fr 400px;
-    gap: 2rem;
     background: var(--bg-white);
     border-radius: 20px;
     overflow: hidden;
@@ -1171,16 +1171,15 @@ body {
 
 .work-detail-image {
     position: relative;
-    background: #000;
+    background: inherit;
     min-height: 500px;
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     justify-content: center;
 }
 
 .work-detail-image img {
     max-width: 100%;
-    max-height: 800px;
     object-fit: contain;
 }
 
@@ -1211,8 +1210,13 @@ body {
     cursor: pointer;
     transition: var(--transition);
     border: 2px solid transparent;
+    width: max-content;
 }
-
+.work-tags{
+    width: 100%;
+    display: grid;
+    gap: 0.3rem;
+}
 .btn-action:hover {
     background: var(--primary-soft);
     color: var(--primary-burgundy);
@@ -1225,10 +1229,14 @@ body {
 
 .work-detail-info {
     padding: 2rem;
-    overflow-y: auto;
-    max-height: 800px;
+        width: 420px;
 }
-
+.work-header{
+    display: flex;
+    width: 100%;
+    justify-content: space-between;
+    align-items: center;
+}
 .work-detail-info h1 {
     color: var(--primary-dark);
     font-size: 2rem;
@@ -2316,3 +2324,5 @@ body {
         font-size: 0.7rem;
     }
 }
+
+

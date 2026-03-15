@@ -14,6 +14,22 @@
             <p class="profile-email"><%= user.email %></p>
             <span class="profile-role"><%= user.role %></span>
         </div>
+        <% if (isOwnProfile) { %>
+            <div class="profile-actions">
+                <% if (isEditing) { %>
+                    <a href="/profile" class="btn">Вернуться в профиль</a>
+                <% } else { %>
+                    <a href="/profile?edit=1" class="btn" title="Редактировать профиль">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M16.4767 3.00405C16.6443 3.01998 16.7166 3.22345 16.5976 3.34248L8.27746 11.6626C8.18323 11.7568 8.11581 11.8744 8.08213 12.0034L7.08213 15.8318C7.01484 16.0894 7.08918 16.3634 7.27746 16.5517C7.46573 16.7399 7.73971 16.8143 7.99733 16.747L11.8258 15.747C11.9547 15.7133 12.0723 15.6459 12.1665 15.5517L20.6045 7.11374C20.7229 6.99535 20.9253 7.06618 20.9427 7.23269C21.2943 10.5819 21.2744 13.9602 20.8831 17.3061C20.6603 19.2111 19.1291 20.7069 17.2307 20.9191C13.7825 21.3044 10.2178 21.3044 6.76972 20.9191C4.87132 20.7069 3.34013 19.2111 3.11732 17.3061C2.70504 13.7811 2.70504 10.22 3.11732 6.69501C3.34013 4.78995 4.87132 3.29418 6.76972 3.082C9.96711 2.72465 13.2647 2.69866 16.4767 3.00405Z" fill="white"/>
+                            <path d="M17.8235 4.23781C17.9211 4.14037 18.0792 4.14037 18.1768 4.23781L19.5912 5.65217C19.6888 5.7498 19.6888 5.90809 19.5912 6.00572L11.2977 14.2991C11.2665 14.3304 11.2269 14.353 11.1841 14.3643L9.26973 14.8643C9.08509 14.9124 8.91694 14.7438 8.96487 14.5592L9.46487 12.645C9.47609 12.602 9.49857 12.5628 9.52998 12.5314L17.8235 4.23781Z" fill="white"/>
+                        </svg>
+                    </a>
+                <% } %>
+                <a href="/works/upload" class="btn">Добавить работу</a>
+                <a href="/auth/logout" class="btn btn-danger">Выйти</a>
+            </div>
+        <% } %>
     </div>
 
     <div class="profile-content">
@@ -100,40 +116,56 @@
                 <div class="works-grid">
                     <% works.forEach((work) => { %>
                         <div class="work-card">
-                            <a href="/works/<%= work.id %>" class="work-link">
-                                <div class="work-image">
-                                    <img src="<%= work.image_path %>" alt="<%= work.title %>">
-                                    <div class="work-overlay">
-                                        <span class="work-views"><i class="fas fa-eye"></i> <%= work.views_count || 0 %></span>
-                                        <span class="work-favorites"><i class="fas fa-heart"></i> <%= work.favorites_count || 0 %></span>
+                    <a style="text-decoration: none;" href="/works/<%= work.id %>" class="work-link">
+                        <div class="work-image">
+                            <img src="<%= work.image_path %>" alt="<%= work.title %>">
+                            <div class="work-overlay">
+                                <span class="work-views">
+                                    <i class="fas fa-eye"></i> <%= work.views_count || 0 %>
+                                </span>
+                            </div>
+                        </div>
+                        <div class="work-info">
+                            <div class="work-header">
+                               <h3 class="work-title"><%= work.title %></h3> 
+                               <% if (currentUser && currentUser.id !== work.user_id) { %>
+                                    <div class="work-card-actions">
+                                        <button style="border: none;
+                                        background-color: inherit;" title="Подать жалобу"
+                                            data-id="<%= work.id %>" 
+                                            data-title="<%= (work.title || '').replace(/"/g, '&quot;') %>"
+                                            onclick="openReportModal(this.dataset.id, this.dataset.title)">
+                                                <svg  width="30" height="30" viewBox="0 0 30 30" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                    <path d="M15 27.5C18.4517 27.5 21.5768 26.1009 23.8388 23.8388C26.1009 21.5768 27.5 18.4517 27.5 15C27.5 11.5483 26.1009 8.42325 23.8388 6.16116C21.5768 3.89911 18.4517 2.5 15 2.5C11.5483 2.5 8.42325 3.89911 6.16116 6.16116C3.89911 8.42325 2.5 11.5483 2.5 15C2.5 18.4517 3.89911 21.5768 6.16116 23.8388C8.42325 26.1009 11.5483 27.5 15 27.5Z" fill="#5A0017"/>
+                                                    <path fill-rule="evenodd" clip-rule="evenodd" d="M15 6.875C15.8629 6.875 16.5625 7.57456 16.5625 8.4375C16.5625 9.30044 15.8629 10 15 10C14.1371 10 13.4375 9.30044 13.4375 8.4375C13.4375 7.57456 14.1371 6.875 15 6.875Z" fill="#F3F7F6"/>
+                                                    <path d="M15.3125 21.25V12.5H14.6875H14.0625" stroke="#F3F7F6" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                                    <path d="M13.125 21.25H17.5" stroke="#F3F7F6" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                                </svg>
+                                        </button>
                                     </div>
-                                </div>
-                                <div class="work-info">
-                                    <h3 class="work-title"><%= work.title %></h3>
-                                    <% if (work.tags && work.tags[0]) { %>
-                                        <div class="work-tags">
-                                            <% work.tags.slice(0, 3).forEach((tag) => { %>
-                                                <span class="tag">#<%= tag %></span>
-                                            <% }) %>
-                                        </div>
-                                    <% } %>
-                                </div>
-                            </a>
-
-                            <% if (currentUser) { %>
-                                <div class="work-card-actions">
-                                    <button
-                                        type="button"
-                                        class="favorite-toggle-btn <%= work.is_favorited ? 'favorited' : '' %>"
-                                        data-work-id="<%= work.id %>"
-                                        data-favorited="<%= work.is_favorited %>"
-                                        onclick="toggleFavoriteFromCard(this)">
-                                        <i class="<%= work.is_favorited ? 'fas' : 'far' %> fa-heart"></i>
-                                        <span><%= work.is_favorited ? 'В избранном' : 'В избранное' %></span>
-                                    </button>
+                                <% } else if (!currentUser) { %>
+                                    <div class="work-card-actions">
+                                        <a href="/auth/login" class="report-link report-link-login">
+                                           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                <path d="M12 22C14.7614 22 17.2614 20.8807 19.0711 19.0711C20.8807 17.2614 22 14.7614 22 12C22 9.2386 20.8807 6.7386 19.0711 4.92893C17.2614 3.11929 14.7614 2 12 2C9.2386 2 6.7386 3.11929 4.92893 4.92893C3.11929 6.7386 2 9.2386 2 12C2 14.7614 3.11929 17.2614 4.92893 19.0711C6.7386 20.8807 9.2386 22 12 22Z" fill="#938F96" fill-opacity="0.5"/>
+                                                <path fill-rule="evenodd" clip-rule="evenodd" d="M12 5.5C12.6903 5.5 13.25 6.05965 13.25 6.75C13.25 7.44035 12.6903 8 12 8C11.3097 8 10.75 7.44035 10.75 6.75C10.75 6.05965 11.3097 5.5 12 5.5Z" fill="#F3F7F6"/>
+                                                <path d="M12.25 17V10H11.75H11.25" stroke="#F3F7F6" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                                <path d="M10.5 17H14" stroke="#F3F7F6" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                            </svg>
+                                        </a>
+                                    </div>
+                                <% } %>
+                            </div>
+                            <% if (work.tags && work.tags[0]) { %>
+                                <div class="work-tags">
+                                    <% work.tags.slice(0, 3).forEach(tag => { %>
+                                        <span class="tag">#<%= tag %></span>
+                                    <% }) %>
                                 </div>
                             <% } %>
                         </div>
+                    </a>
+                </div>
                     <% }) %>
                 </div>
             <% } else { %>
@@ -218,18 +250,6 @@
                         <% }) %>
                     </div>
                 <% } %>
-            </div>
-        <% } %>
-
-        <% if (isOwnProfile) { %>
-            <div class="profile-actions">
-                <% if (isEditing) { %>
-                    <a href="/profile" class="btn">Вернуться в профиль</a>
-                <% } else { %>
-                    <a href="/profile?edit=1" class="btn">Редактировать профиль</a>
-                <% } %>
-                <a href="/works/upload" class="btn">Добавить работу</a>
-                <a href="/auth/logout" class="btn btn-danger">Выйти</a>
             </div>
         <% } %>
     </div>
