@@ -45,7 +45,8 @@ exports.getProfile = async (req, res) => {
             const favoritesQuery = `
                 SELECT w.*, array_agg(DISTINCT t.name) as tags,
                        COUNT(DISTINCT f2.user_id) as favorites_count,
-                       BOOL_OR(fm.user_id IS NOT NULL) as is_favorited
+                       BOOL_OR(fm.user_id IS NOT NULL) as is_favorited,
+                       MAX(f.created_at) as favorited_at
                 FROM favorites f
                 JOIN works w ON f.work_id = w.id
                 LEFT JOIN work_tags wt ON w.id = wt.work_id
@@ -54,7 +55,7 @@ exports.getProfile = async (req, res) => {
                 LEFT JOIN favorites fm ON w.id = fm.work_id AND fm.user_id = $2
                 WHERE f.user_id = $1 AND w.status = 'approved'
                 GROUP BY w.id
-                ORDER BY f.created_at DESC
+                ORDER BY favorited_at DESC
             `;
             const favoritesResult = await db.query(favoritesQuery, [userId, req.session.userId || null]);
             favorites = favoritesResult.rows;
