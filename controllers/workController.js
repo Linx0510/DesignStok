@@ -205,7 +205,22 @@ exports.removeFromFavorites = async (req, res) => {
 
 exports.reportWork = async (req, res) => {
     try {
-        const { workId, reason } = req.body;
+        const workId = parseInt(req.params.id || req.body.workId, 10);
+        const reasonLabels = {
+            copyright: 'Нарушение авторских прав',
+            inappropriate: 'Неприемлемое содержание',
+            spam: 'Спам',
+            offensive: 'Оскорбительный контент'
+        };
+
+        const rawReason = typeof req.body.reason === 'string' ? req.body.reason.trim() : '';
+        const customReason = typeof req.body.other_reason === 'string' ? req.body.other_reason.trim() : '';
+        const reason = reasonLabels[rawReason] || (rawReason === 'other' ? customReason : rawReason);
+
+        if (Number.isNaN(workId) || !reason) {
+            req.flash('error', 'Укажите причину жалобы');
+            return res.redirect('back');
+        }
         
         await db.query(
             'INSERT INTO complaints (reporter_user_id, work_id, reason, status) VALUES ($1, $2, $3, $4)',
