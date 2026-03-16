@@ -266,8 +266,8 @@ exports.getComplaints = async (req, res) => {
                    w.id as work_id
             FROM complaints c
             LEFT JOIN users u1 ON c.${reporterColumn} = u1.id
-            JOIN works w ON c.work_id = w.id
-            JOIN users u2 ON w.user_id = u2.id
+            LEFT JOIN works w ON c.work_id = w.id
+            LEFT JOIN users u2 ON w.user_id = u2.id
             ${whereClause}
             ORDER BY c.created_at DESC
             LIMIT $1 OFFSET $2
