@@ -208,8 +208,8 @@ exports.reportWork = async (req, res) => {
         const { workId, reason } = req.body;
         
         await db.query(
-            'INSERT INTO complaints (reporter_user_id, work_id, reason) VALUES ($1, $2, $3)',
-            [req.session.userId, workId, reason]
+            'INSERT INTO complaints (reporter_user_id, work_id, reason, status) VALUES ($1, $2, $3, $4)',
+            [req.session.userId, workId, reason, 'open']
         );
         
         req.flash('success', 'Жалоба отправлена');
