@@ -45,7 +45,7 @@ body {
     display: inline-flex;
     align-items: center;
     gap: 0.5rem;
-    padding: 0.75rem 1.5rem;
+    padding: 0.5rem 0.5rem;
     border: none;
     border-radius: 8px;
     font-size: 1rem;
@@ -478,16 +478,20 @@ body {
     padding: 0 2rem;
 }
 
-.profile-header {
+.profile_user {
     background: linear-gradient(135deg, var(--primary-burgundy), var(--primary-dark));
     border-radius: 20px;
-    padding: 3rem;
-    margin-bottom: 2rem;
+    padding: 1.5rem;
     color: white;
     box-shadow: var(--shadow-lg);
     width: 300px;
+    height: max-content;
 }
-
+.profile-header{
+    display: flex;
+    justify-content: space-evenly;
+    margin-bottom: 1rem;
+}
 .profile-cover {
     text-align: center;
 }
@@ -580,7 +584,6 @@ body {
 
 .profile-bio,
 .profile-info {
-    margin-bottom: 2rem;
     padding: 1.5rem;
     background: var(--bg-light);
     border-radius: 12px;
@@ -683,6 +686,10 @@ body {
     gap: 1rem;
     display: flex;
     flex-direction: column;
+    text-decoration: none;
+}
+.work-link{
+    text-decoration: none;
 }
 
 .work-title {
@@ -827,8 +834,7 @@ body {
 }
 
 .work-card[data-id] {
-    display: grid;
-    grid-template-columns: 200px 1fr;
+    display: flex;
     gap: 1.5rem;
     background: var(--bg-white);
     padding: 1.5rem;
@@ -837,6 +843,7 @@ body {
 .work-card[data-id] .work-image {
     border-radius: 8px;
     height: 200px;
+    width: 500px;
 }
 
 .work-title-row {
